@@ -1,0 +1,2 @@
+# Dependencias del proyecto: solo Django (la app usa Python estándar + SQLite).
+Django>=6.0

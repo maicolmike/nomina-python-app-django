@@ -1,0 +1,9 @@
+# Base de datos local (contiene los datos del grupo)
+nomina.db
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Archivos temporales
+f_out.txt

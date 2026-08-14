@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<!-- ====================================================================
+     index.html  ->  La estructura de la página (los "huesos" de la interfaz).
+     El <body> tiene secciones (pestañas) y formularios con ids que luego
+     manipula static/app.js. Ese archivo (app.js) es quien llena los textos,
+     las listas y los contadores cuando llegan los datos del servidor.
+
+     Regla general: casi todos los elementos tienen un "id" y un botón
+     lleva un atributo data-* (ej. data-mover="3") que app.js lee para
+     saber qué acción hacer.
+     ==================================================================== -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3b0f7a">
+<title>Nómina · FAMILIA MIXTO SIN LÍMITES 2023</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- Botones de la barra superior: entrar como directiva (log in) o salir. -->
+<header class="barra">
+  <div class="marca">
+    <span class="pelota">⚽</span>
+    <div>
+      <h1 id="titulo-grupo">FAMILIA MIXTO SIN LÍMITES 2023</h1>
+    </div>
+  </div>
+  <div class="derecha">
+    <button id="btn-login" class="pill-boton">Directiva</button>
+    <button id="btn-logout" class="pill-boton oculto">Salir</button>
+  </div>
+</header>
+
+<main>
+  <!-- ============================================================ NÓMINA -->
+  <section id="tab-nomina" class="tab oculto">
+    <div class="tarjeta">
+      <div class="datos-partido">
+        <div><b>📅 Fecha:</b> <span id="d-fecha"></span></div>
+        <div><b>🕕 Hora:</b> <span id="d-hora"></span></div>
+        <div><b>🏟 Cancha:</b> <span id="d-cancha"></span></div>
+      </div>
+      <div class="acciones solo-directiva">
+        <button id="btn-editar-partido" class="btn claro">✏️ Editar partido</button>
+        <button id="btn-nuevo-partido" class="btn claro">➕ Nuevo partido</button>
+      </div>
+      <div id="form-partido" class="oculto rejilla">
+        <label>Fecha <input id="p-fecha" type="date"></label>
+        <label>Hora <input id="p-hora" type="time"></label>
+        <label class="ancho">Cancha <input id="p-cancha"></label>
+        <div class="acciones ancho">
+          <button id="btn-guardar-partido" class="btn morado">Guardar</button>
+          <button id="btn-cancelar-partido" class="btn claro">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="contadores">
+      <div class="tarjeta contador">
+        <span class="etiqueta">🌹 MUJERES</span>
+        <b id="c-mujeres">0/6</b>
+        <div class="barra-progreso"><i id="b-mujeres"></i></div>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">⚽ HOMBRES</span>
+        <b id="c-hombres">0/6</b>
+        <div class="barra-progreso"><i id="b-hombres"></i></div>
+      </div>
+    </div>
+
+    <div class="tarjeta solo-directiva">
+      <div class="acciones">
+        <button id="btn-cambiar-cupos" class="btn claro oculto">✏️ Modificar cupos</button>
+      </div>
+      <div id="form-cupos" class="rejilla oculto" style="margin-top:10px;">
+        <label>Mujeres <input id="cupos-mujeres" type="number" min="0" value="6"></label>
+        <label>Hombres <input id="cupos-hombres" type="number" min="0" value="6"></label>
+        <div class="acciones ancho">
+          <button id="btn-guardar-cupos" class="btn morado">Guardar cupos</button>
+          <button id="btn-cancelar-cupos" class="btn claro">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="titulo-seccion">📋 NÓMINA <small id="c-total">(0/12)</small></h2>
+    <div id="lista-nomina" class="tarjeta lista"></div>
+
+    <h2 class="titulo-seccion">⏳ LISTA DE ESPERA</h2>
+    <div id="lista-espera" class="tarjeta lista"></div>
+
+    <div class="tarjeta solo-directiva">
+      <h3 class="titulo-tarjeta">➕ ANOTAR «VOY»</h3>
+      <div class="autocompletar">
+        <input id="buscar" autocomplete="off" placeholder="voy + nombre y apellido">
+        <div id="sugerencias" class="sugerencias oculto"></div>
+      </div>
+      <div class="rejilla">
+        <label>Género
+          <select id="a-genero"><option value="F">🌹 Mujer</option><option value="M">⚽ Hombre</option></select>
+        </label>
+        <label>Quién anota
+          <select id="a-quien">
+            <option value="">Miembro del grupo</option>
+            <option value="invitado">Invitado por…</option>
+          </select>
+        </label>
+        <label id="campo-invita" class="ancho oculto">Invitado por
+          <div class="autocompletar">
+            <input id="a-invita" autocomplete="off" placeholder="Nombre de quien lo anota">
+            <div id="invitado-sugerencias" class="sugerencias oculto"></div>
+          </div>
+        </label>
+        <label>Destino
+          <select id="a-destino">
+            <option value="">Automático (reglas)</option>
+            <option value="nomina">Nómina</option>
+            <option value="espera">Lista de espera</option>
+          </select>
+        </label>
+      </div>
+      <button id="btn-anotar" class="btn morado ancho">✅ Anotar en nómina</button>
+      <p id="hint-corte" class="hint"></p>
+      <p id="aviso" class="aviso oculto"></p>
+    </div>
+
+    <div class="tarjeta solo-directiva">
+      <h3 class="titulo-tarjeta">💬 TEXTO PARA WHATSAPP
+        <button id="btn-copiar" class="btn claro chico">Copiar</button></h3>
+      <pre id="texto" class="texto"></pre>
+    </div>
+  </section>
+
+  <!-- ========================================================== PARTIDOS -->
+  <section id="tab-partidos" class="tab">
+    <h2 class="titulo-seccion">📅 PARTIDOS</h2>
+    <div class="tarjeta solo-directiva rejilla">
+      <label>Fecha <input id="n-fecha" type="date" required></label>
+      <label>Hora <input id="n-hora" type="time" required></label>
+      <label class="ancho">Cancha <input id="n-cancha" required></label>
+      <button id="btn-crear-partido" class="btn morado ancho">➕ Crear partido</button>
+      <button id="btn-cancelar-editar-partido" class="btn claro ancho oculto">Cancelar edición</button>
+      <p id="hint-partido-form" class="hint">La fecha, la hora y la cancha son obligatorias para crear el partido.</p>
+    </div>
+    <div id="lista-partidos" class="lista-tarjetas"></div>
+  </section>
+
+  <!-- ============================================================ MULTAS -->
+  <section id="tab-multas" class="tab oculto">
+    <div class="contadores">
+      <div class="tarjeta contador">
+        <span class="etiqueta">DEUDA PENDIENTE</span>
+        <b id="c-deuda" class="naranja">$0</b>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">MULTAS VENCIDAS</span>
+        <b id="c-vencidas" class="rojo-texto">0</b>
+      </div>
+    </div>
+    <div class="tarjeta solo-directiva">
+      <h3 class="titulo-tarjeta">➕ REGISTRAR MULTA</h3>
+      <label class="ancho">Jugador
+        <div class="autocompletar">
+          <input id="m-jugador" autocomplete="off" placeholder="Escribe el nombre…">
+          <div id="m-jugador-sugerencias" class="sugerencias oculto"></div>
+        </div></label>
+      <label class="ancho">Motivo
+        <select id="m-motivo-comun"><option value="">— Elegir motivo común —</option></select></label>
+      <div class="rejilla">
+        <label>Valor ($) <input id="m-valor" type="number" min="0" step="500" required></label>
+        <label>Fecha de la multa <input id="m-fecha" type="date" required></label>
+        <label>Abono ($) <input id="m-abono" type="number" min="0" step="500" value="0"></label>
+        <label>Plazo máximo <input id="m-plazo" type="date"></label>
+      </div>
+      <div class="acciones ancho">
+        <button id="btn-guardar-multa" class="btn morado">Registrar multa</button>
+        <button id="btn-nuevo-motivo" class="btn claro">➕ Agregar motivo</button>
+        <button id="btn-cancelar-editar-multa" class="btn claro oculto">Cancelar</button>
+      </div>
+      <p class="hint">Para registrar una multa se necesita: el jugador, el motivo y la fecha de la multa.</p>
+    </div>
+    <div id="card-motivos-personalizados" class="tarjeta solo-directiva oculto">
+      <h3 class="titulo-tarjeta">🏷️ MOTIVOS PERSONALIZADOS</h3>
+      <div id="form-motivo-nuevo" class="rejilla">
+        <label>Motivo <input id="m-motivo-nuevo" placeholder="Ej: lavarse la cabeza"></label>
+        <label>Valor ($) <input id="m-motivo-nuevo-valor" type="number" min="0" step="500"></label>
+        <div class="acciones ancho">
+          <button id="btn-guardar-motivo" class="btn morado">Guardar motivo</button>
+          <button id="btn-cancelar-editar-motivo" class="btn claro">Cancelar</button>
+        </div>
+      </div>
+      <div id="lista-motivos"></div>
+    </div>
+    <div id="lista-multas" class="lista-tarjetas"></div>
+  </section>
+
+  <!-- ========================================================= JUGADORES -->
+  <section id="tab-jugadores" class="tab oculto">
+    <div class="tarjeta solo-directiva">
+      <h3 class="titulo-tarjeta">➕ AGREGAR JUGADOR AL GRUPO</h3>
+      <div class="rejilla">
+        <label class="ancho">Nombre y apellido <input id="j-nombre"></label>
+        <label>Género
+          <select id="j-genero"><option value="F">🌹 Mujer</option><option value="M">⚽ Hombre</option></select>
+        </label>
+      </div>
+      <button id="btn-agregar-jugador" class="btn morado ancho">Agregar jugador</button>
+    </div>
+    <h2 class="titulo-seccion">👥 JUGADORES DEL GRUPO <small id="c-jugadores"></small></h2>
+    <div id="lista-jugadores" class="tarjeta lista"></div>
+  </section>
+
+  <!-- ============================================================ CONFIG -->
+  <section id="tab-config" class="tab solo-directiva oculto">
+    <div class="tarjeta">
+      <h3 class="titulo-tarjeta">⚙️ CONFIGURACIÓN</h3>
+      <div class="rejilla solo-directiva">
+        <label class="ancho">Nombre del grupo <input id="cf-nombre_grupo"></label>
+        <label class="ancho titulo-mini">💰 VALORES DE MULTA ($)</label>
+        <label>Llegó tarde <input id="cf-multa_tarde" type="number" min="0"></label>
+        <label>No se alistó <input id="cf-multa_no_alisto" type="number" min="0"></label>
+        <label>No asistió <input id="cf-multa_no_asistio" type="number" min="0"></label>
+        <label>Salió antes <input id="cf-multa_salio" type="number" min="0"></label>
+        <label>Agresión <input id="cf-multa_agresion" type="number" min="0"></label>
+        <label>Falta con lesión <input id="cf-multa_falta" type="number" min="0"></label>
+        <label>Reingreso <input id="cf-multa_reingreso" type="number" min="0"></label>
+        <label>Plazo para pagar (días) <input id="cf-plazo_dias" type="number" min="1"></label>
+        <label class="ancho">PIN de la directiva (vacío = no cambiar · escribe SIN-PIN para quitarlo)
+          <input id="cf-pin" placeholder="Nuevo PIN"></label>
+        <label class="ancho">Reglas del grupo <textarea id="cf-reglas" rows="6"></textarea></label>
+        <label class="ancho">Reglamento de multas
+          <textarea id="cf-reglamento_multas" rows="8"></textarea></label>
+        <button id="btn-guardar-config" class="btn verde ancho">Guardar configuración</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================== REGLAMENTO -->
+  <section id="tab-reglamento" class="tab oculto">
+    <h2 class="titulo-seccion">📋 REGLAMENTO</h2>
+    <div class="tarjeta">
+      <h3 class="titulo-tarjeta">REGLAS DEL GRUPO</h3>
+      <div id="v-reglas" class="reglamento"></div>
+    </div>
+    <div class="tarjeta">
+      <h3 class="titulo-tarjeta">REGLAMENTO DE MULTAS</h3>
+      <div id="v-reglamento" class="reglamento"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Barra de navegación inferior: cambia entre las pestañas de la app. -->
+<nav class="tabs">
+  <button data-tab="partidos" class="activa"><span>📅</span>Partidos</button>
+  <button data-tab="nomina"><span>📋</span>Nómina</button>
+  <button data-tab="multas"><span>💸</span>Multas</button>
+  <button data-tab="jugadores"><span>👥</span>Jugadores</button>
+  <button data-tab="reglamento"><span>📖</span>Reglamento</button>
+  <button data-tab="config" class="solo-directiva"><span>⚙️</span>Config</button>
+</nav>
+
+<!-- Ventana modal para pedir el PIN de la directiva al entrar. -->
+<div id="modal-login" class="modal oculto">
+  <div class="modal-caja">
+    <h3>Acceso directiva</h3>
+    <label>PIN <input id="login-pin" type="password" inputmode="numeric"></label>
+    <p id="login-error" class="error oculto"></p>
+    <div class="acciones">
+      <button id="btn-entrar" class="btn morado">Entrar</button>
+      <button id="btn-cerrar-login" class="btn claro">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
