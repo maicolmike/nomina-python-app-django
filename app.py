@@ -33,11 +33,15 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 DB_PATH = os.environ.get("NOMINA_DB", os.path.join(BASE_DIR, "nomina.db"))
 PORT = int(os.environ.get("NOMINA_PORT", "8000"))
 
-# _lock      -> candado para que varios navegadores no toquen la base a la vez
-# _sessions  -> diccionario de sesiones activas. Cada visitante tiene un "token"
-#               (una clave secreta) que identifica si es directiva o un simple invitado.
-_lock = threading.RLock()
-_sessions = {}  # token -> {"rol": "directiva", "nombre": str}
+# Así se maneja la base para que varias personas puedan trabajar a la vez (hasta ~5):
+#   - Cada petición abre su PROPIA conexión SQLite y la cierra al terminar; así los
+#     hilos/procesos ya no comparten una misma conexión (esa era la causa de conflictos).
+#   - El modo WAL (Write-Ahead Logging) permite que muchos lean mientras uno escribe.
+#   - Las escrituras van en fila con un candado (_escribir_lock) para que dos personas
+#     no modifiquen el mismo dato exactamente a la vez ni se superen los cupos.
+#   - Las sesiones de la directiva se guardan EN LA BASE (tabla "sesiones"), no en memoria,
+#     para que sobrevivan reinicios y a varios procesos.
+_escribir_lock = threading.RLock()
 
 # =============================================================================
 # VALORES INICIALES (se guardan en la base la primera vez que se ejecuta)
@@ -209,6 +213,12 @@ CREATE TABLE IF NOT EXISTS motivos_multa (
   texto TEXT NOT NULL UNIQUE,
   valor INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS sesiones (
+  token TEXT PRIMARY KEY,
+  rol TEXT NOT NULL DEFAULT 'directiva',
+  nombre TEXT DEFAULT '',
+  creado TEXT NOT NULL
+);
 """
 
 # Estructura general del proyecto:
@@ -255,41 +265,137 @@ def hora_es(hora):
     return f"{(h % 12) or 12}:{m:02d}{sufijo}"
 
 
-# DB -> conexión global a la base de datos (se abre en init_db).
+# -----------------------------------------------------------------------------
+# ACCESO A LA BASE DE DATOS (seguro para varias personas a la vez)
+# -----------------------------------------------------------------------------
+
+def nueva_conexion():
+    """Abre una conexión SQLite nueva y bien configurada.
+
+    - timeout: si la base está ocupada por otro, espera hasta N segundos antes de fallar.
+    - WAL: deja que muchos lean mientras uno escribe (clave del soporte multi-usuario).
+    - foreign_keys: mantiene el borrado en cascada al quitar jugadores/partidos.
+    """
+    con = sqlite3.connect(DB_PATH, timeout=10)
+    con.row_factory = sqlite3.Row
+    con.execute("PRAGMA foreign_keys = ON")
+    con.execute("PRAGMA busy_timeout = 10000")
+    con.execute("PRAGMA journal_mode = WAL")
+    return con
+
+
+class _ConexionLocal:
+    """Objeto 'DB' virtual: CADA HILO usa su propia conexión SQLite.
+
+    Todas las operaciones DB.execute/DB.commit de todo el proyecto pasan por
+    aquí. Con threading.local, cada hilo/petición tiene una conexión aparte y
+    nunca comparte esa conexión con otro hilo (la causa original de los
+    errores "created in a thread can only be used in that same thread").
+    """
+
+    def __init__(self):
+        self._local = threading.local()
+
+    def _asignar(self, con):
+        self._local.con = con
+
+    def _cerrar(self):
+        con = getattr(self._local, "con", None)
+        if con is not None:
+            try:
+                con.close()
+            finally:
+                self._local.con = None
+
+    def _actual(self):
+        con = getattr(self._local, "con", None)
+        if con is None:
+            con = nueva_conexion()
+            self._local.con = con
+        return con
+
+    def __getattr__(self, nombre):
+        return getattr(self._actual(), nombre)
+
+
+# DB -> acceso a la base. No es una conexión "global": cada hilo tiene la suya.
+DB = _ConexionLocal()
+
+
+class conexion_peticion:
+    """Delimita UNA petición: abre una conexión nueva del hilo y la cierra al salir.
+
+    Uso:
+        with conexion_peticion(escribir=True):
+            ...código que lee y escribe la base...
+
+    - escribir=True   -> candado de escritura: dos personas no editan a la vez
+                         (evita pasarse de cupos o pisarse cambios).
+    - escribir=False  -> lectura normal: todas van en paralelo.
+    """
+
+    def __init__(self, escribir=False):
+        self._escribir = escribir
+
+    def __enter__(self):
+        if self._escribir:
+            _escribir_lock.acquire()
+        try:
+            DB._cerrar()                      # descarta la conexión vieja del hilo
+            DB._asignar(nueva_conexion())
+        except Exception:
+            if self._escribir:
+                _escribir_lock.release()
+            raise
+        return DB._actual()
+
+    def __exit__(self, tipo, valor, tb):
+        try:
+            if tipo is not None:
+                try:
+                    DB._actual().rollback()
+                except sqlite3.Error:
+                    pass
+        finally:
+            try:
+                DB._cerrar()
+            finally:
+                if self._escribir:
+                    _escribir_lock.release()
+
 
 # init_db(): prepara la base al arrancar.
-#   1. Abre la conexión y activa las claves foráneas.
+#   1. Abre una conexión temporal y activa las claves foráneas.
 #   2. Crea las tablas (SCHEMA) si no existen.
 #   3. Aplica migraciones para bases viejas.
 #   4. Guarda la configuración por defecto.
 #   5. Si no hay jugadores, carga los datos iniciales (sembrar()).
 def init_db():
-    global DB
-    DB = sqlite3.connect(DB_PATH, check_same_thread=False)
-    DB.row_factory = sqlite3.Row
-    DB.execute("PRAGMA foreign_keys = ON")
-    with _lock:
-        DB.executescript(SCHEMA)
-        migrar_nomina()
-        migrar_partidos()
+    con = nueva_conexion()
+    try:
+        con.executescript(SCHEMA)
+        migrar_nomina(con)
+        migrar_partidos(con)
         for clave, valor in CONFIG_DEFAULT.items():
-            DB.execute("INSERT OR IGNORE INTO config (clave, valor) VALUES (?,?)", (clave, valor))
-        if not DB.execute("SELECT 1 FROM participantes LIMIT 1").fetchone():
-            sembrar()
-        DB.commit()
+            con.execute("INSERT OR IGNORE INTO config (clave, valor) VALUES (?,?)", (clave, valor))
+        if not con.execute("SELECT 1 FROM participantes LIMIT 1").fetchone():
+            sembrar(con)
+        con.commit()
+    finally:
+        con.close()
 
 
-def migrar_nomina():
+def migrar_nomina(con):
     """Agrega a la tabla nomina las columnas para invitados sin ficha de jugador.
 
     Un invitado que no está en la base se guarda directo en la nómina (nombre y
     género en texto), sin crear un participante. Solo aplica en bases viejas.
     """
-    columnas = {r[1] for r in DB.execute("PRAGMA table_info(nomina)")}
+    columnas = {r[1] for r in con.execute("PRAGMA table_info(nomina)")}
     if "nombre_libre" in columnas:
         return
-    DB.execute("ALTER TABLE nomina RENAME TO nomina_old")
-    DB.execute("""
+    con.execute("ALTER TABLE nomina RENAME TO nomina_old")
+    con.execute("""
       CREATE TABLE nomina (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         partido_id INTEGER NOT NULL REFERENCES partidos(id) ON DELETE CASCADE,
@@ -302,40 +408,43 @@ def migrar_nomina():
         UNIQUE (partido_id, participante_id)
       )
     """)
-    DB.execute("""
+    con.execute("""
       INSERT INTO nomina (id, partido_id, participante_id, lista, invitado_por,
                           nombre_libre, genero_libre, creado)
       SELECT id, partido_id, participante_id, lista, invitado_por, '', '', creado
       FROM nomina_old
     """)
-    DB.execute("DROP TABLE nomina_old")
-    DB.commit()
+    con.execute("DROP TABLE nomina_old")
+    con.commit()
 
 
-def migrar_partidos():
+def migrar_partidos(con):
     """Agrega la columna 'activo' a la tabla partidos en bases viejas.
 
     Marca cuál partido está 'en uso' (el que aparece en la nómina). Solo
     aplica en bases creadas antes de existir esa columna.
     """
-    columnas = {r[1] for r in DB.execute("PRAGMA table_info(partidos)")}
+    columnas = {r[1] for r in con.execute("PRAGMA table_info(partidos)")}
     if "activo" not in columnas:
-        DB.execute("ALTER TABLE partidos ADD COLUMN activo INTEGER NOT NULL DEFAULT 0")
-        DB.commit()
+        con.execute("ALTER TABLE partidos ADD COLUMN activo INTEGER NOT NULL DEFAULT 0")
+        con.commit()
 
 
-# sembrar(): llena la base con los jugadores y multas iniciales (solo la primera vez).
-def sembrar():
-    DB.executemany(
-        "INSERT INTO participantes (nombre, genero, miembro, activo, expulsado)"
+# sembrar(con): llena la base con los jugadores y multas iniciales (solo la primera vez).
+def sembrar(con):
+    con.executemany(
+        "INSERT OR IGNORE INTO participantes (nombre, genero, miembro, activo, expulsado)"
         " VALUES (?,?,?,?,?)",
         [(n, g, m, a, e) for n, g, m, a, e in PARTICIPANTES_SEED],
     )
     plazo = int(CONFIG_DEFAULT["plazo_dias"])
     for nombre, fecha, valor, abono, plazo_max in MULTAS_SEED:
-        DB.execute(
+        pid = id_por_nombre(nombre, con)
+        if not pid:
+            continue
+        con.execute(
             "INSERT INTO multas (participante_id, fecha, valor, abono, plazo) VALUES (?,?,?,?,?)",
-            (id_por_nombre(nombre), fecha, valor, abono, plazo_max or sumar_dias(fecha, plazo)),
+            (pid, fecha, valor, abono, plazo_max or sumar_dias(fecha, plazo)),
         )
 
 
@@ -380,9 +489,10 @@ def sumar_dias(fecha_iso, dias):
         return ""
 
 
-# id_por_nombre("Pedro") -> el id del participante, o None si no existe.
-def id_por_nombre(nombre):
-    fila = DB.execute("SELECT id FROM participantes WHERE nombre = ?", (nombre,)).fetchone()
+# id_por_nombre("Pedro", con) -> el id del participante, o None si no existe.
+def id_por_nombre(nombre, con=None):
+    con = con or DB
+    fila = con.execute("SELECT id FROM participantes WHERE nombre = ?", (nombre,)).fetchone()
     return fila["id"] if fila else None
 
 
@@ -397,6 +507,37 @@ def cfg():
         c["cupos_mujeres"] = "6"
         c["cupos_hombres"] = "6"
     return c
+
+
+# ----------------------------------------------------------------------------
+# SESIONES DE LA DIRECTIVA (guardadas en la base, no en memoria)
+# ----------------------------------------------------------------------------
+
+def session_get(token):
+    """Devuelve la sesión de un token, o None si no existe/expiró."""
+    if not token:
+        return None
+    fila = DB.execute("SELECT rol, nombre FROM sesiones WHERE token = ?", (token,)).fetchone()
+    if not fila:
+        return None
+    return {"rol": fila["rol"], "nombre": fila["nombre"]}
+
+
+def session_set(token, datos):
+    """Guarda una sesión nueva (login de la directiva)."""
+    DB.execute(
+        "INSERT OR REPLACE INTO sesiones (token, rol, nombre, creado) VALUES (?,?,?,?)",
+        (token, datos.get("rol", "directiva"), datos.get("nombre") or "",
+         datetime.now().isoformat(timespec="seconds")),
+    )
+    DB.commit()
+
+
+def session_del(token):
+    """Borra una sesión (logout)."""
+    if token:
+        DB.execute("DELETE FROM sesiones WHERE token = ?", (token,))
+        DB.commit()
 
 
 # entero("12") -> 12. Convierte a número entero; si falla, usa el valor "defecto".
@@ -989,7 +1130,7 @@ class Handler(BaseHTTPRequestHandler):
     def rol(self):
         if not cfg()["pin"].strip():
             return "directiva"
-        sesion = _sessions.get(self.token())
+        sesion = session_get(self.token())
         return sesion["rol"] if sesion else "invitado"
 
     # exigir_directiva(): si el visitante no es directiva, lanza error 403,
@@ -1053,7 +1194,7 @@ class Handler(BaseHTTPRequestHandler):
             self.archivo(u.path)
             return
         try:
-            with _lock:
+            with conexion_peticion():
                 if u.path == "/api/estado":
                     args = parse_qs(u.query)
                     pid = entero((args.get("id") or [""])[0], 0) or None
@@ -1072,11 +1213,12 @@ class Handler(BaseHTTPRequestHandler):
             self.responder({"error": e.mensaje}, e.codigo)
 
         # do_POST() / do_DELETE() -> atienden peticiones que cambian datos.
-    # Leen el JSON enviado y lo pasan a enrutar().
+    # Leen el JSON enviado y lo pasan a enrutar(). Las escrituras van con
+    # conexión propia Y candado (_escribir_lock) para no pisarse entre usuarios.
     def do_POST(self):
         try:
             datos = self.cuerpo_json()
-            with _lock:
+            with conexion_peticion(escribir=True):
                 self.enrutar(urlparse(self.path).path, datos)
         except ErrorApp as e:
             self.responder({"error": e.mensaje}, e.codigo)
@@ -1093,12 +1235,12 @@ class Handler(BaseHTTPRequestHandler):
             if not pin or (datos.get("pin") or "").strip() != pin:
                 raise ErrorApp("PIN incorrecto", 401)
             token = secrets.token_urlsafe(24)
-            _sessions[token] = {"rol": "directiva", "nombre": datos.get("nombre") or "directiva"}
+            session_set(token, {"rol": "directiva", "nombre": datos.get("nombre") or "directiva"})
             self.responder({"ok": True, "rol": "directiva"},
                            cookie=f"nomina_token={token}; Path=/; HttpOnly; SameSite=Lax")
             return
         if ruta == "/api/logout":
-            _sessions.pop(self.token(), None)
+            session_del(self.token())
             self.responder({"ok": True}, cookie="nomina_token=; Path=/; Max-Age=0")
             return
 

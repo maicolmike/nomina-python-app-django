@@ -10,7 +10,7 @@
 #   - Las peticiones POST/DELETE traen JSON sin token CSRF (son de un celular
 #     o de la interfaz). Por eso cada vista está decorada con @csrf_exempt.
 #   - El acceso de "directiva" se sigue validando con la cookie nomina_token
-#     y el mismo diccionario _sessions de app.py.
+#     y la tabla de sesiones de app.py (guardada en la base de datos).
 # =============================================================================
 
 import json
@@ -38,7 +38,7 @@ def _rol(request):
     """Dice si el visitante es 'directiva' o 'invitado' (igual que app.py)."""
     if not servidor.cfg()["pin"].strip():
         return "directiva"
-    sesion = servidor._sessions.get(_token(request))
+    sesion = servidor.session_get(_token(request))
     return sesion["rol"] if sesion else "invitado"
 
 
@@ -114,11 +114,11 @@ def api_auth(request, accion):
             raise servidor.ErrorApp("PIN incorrecto", 401)
         from secrets import token_urlsafe
         token = token_urlsafe(24)
-        servidor._sessions[token] = {"rol": "directiva", "nombre": datos.get("nombre") or "directiva"}
+        servidor.session_set(token, {"rol": "directiva", "nombre": datos.get("nombre") or "directiva"})
         return _responder({"ok": True, "rol": "directiva"},
                           cookie=f"nomina_token={token}; Path=/; HttpOnly; SameSite=Lax")
     # logout
-    servidor._sessions.pop(_token(request), None)
+    servidor.session_del(_token(request))
     return _responder({"ok": True}, cookie="nomina_token=; Path=/; Max-Age=0")
 
 

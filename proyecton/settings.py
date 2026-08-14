@@ -23,7 +23,7 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = []  # no usamos las apps propias de Django
 
-MIDDLEWARE = []  # sin middleware: las peticiones llegan directo a las vistas
+MIDDLEWARE = ['proyecton.middleware.ConexionMiddleware']  # una conexión de base por petición
 
 ROOT_URLCONF = 'proyecton.urls'
 
