@@ -266,7 +266,7 @@ textarea { font-size: .85rem; }
 #lista-jugadores .encabezado-fila,
 #lista-jugadores .fila {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 54px 118px;
+  grid-template-columns: minmax(0, 1fr) 54px 132px;
   gap: 10px;
   align-items: center;
 }
@@ -286,6 +286,7 @@ textarea { font-size: .85rem; }
 #lista-jugadores .fila .acciones,
 #lista-jugadores .encabezado-fila .acciones {
   display: flex;
+  flex-wrap: nowrap;
   gap: 2px;
   align-items: center;
   padding-left: 14px;
