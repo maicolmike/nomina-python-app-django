@@ -99,6 +99,7 @@ function pintar() {
     el.classList.toggle("oculto", !dir);
   });
   $("card-motivos-personalizados").classList.add("oculto");
+  $("card-cancha-nueva").classList.add("oculto");
   $("btn-login").classList.toggle("oculto", dir || !estado.requiere_pin);
   $("btn-logout").classList.toggle("oculto", !dir || !estado.requiere_pin);
 
@@ -208,18 +209,48 @@ function pintarPartidos() {
     </div>`).join("");
 }
 
-// pintarCanchas() -> llena los selects de cancha (crear y editar partido) con
-// las canchas guardadas en la base. Conserva la opción que ya estaba elegida.
+// pintarCanchas() -> dibuja la lista de canchas guardadas (con botones para
+// editar y borrar), dentro del panel que se abre con "Agregar cancha". El
+// autocompletado de los inputs usa estado.canchas en memoria.
 function pintarCanchas() {
   const canchas = estado.canchas || [];
-  for (const id of ["n-cancha", "p-cancha"]) {
-    const sel = $(id);
-    const previa = sel.value;
-    sel.innerHTML = '<option value="">— Elegir cancha —</option>'
-      + canchas.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
-    if (previa) sel.value = previa;
-  }
+  $("lista-canchas").innerHTML = canchas.length ? canchas.map((c) => `
+    <div class="fila">
+      <span class="nombre">🏟 ${esc(c.nombre)}</span>
+      <button class="icono" data-editar-cancha="${c.id}" title="Editar cancha">✏️</button>
+      <button class="icono" data-borrar-cancha="${c.id}" title="Borrar cancha">🗑</button>
+    </div>`).join("") : '<p class="vacio">Aún no hay canchas guardadas.</p>';
 }
+
+// autocompletarCancha(idInput, idCont) -> hace que escribir en el campo de cancha
+// muestre sugerencias de las canchas guardadas (de la base de datos).
+function autocompletarCancha(idInput, idCont) {
+  const input = $(idInput);
+  const caja = $(idCont);
+  input.addEventListener("input", () => {
+    if (!input.value.trim()) { caja.classList.add("oculto"); return; }
+    const texto = input.value.toLowerCase();
+    const resultado = (estado.canchas || [])
+      .filter((c) => c.nombre.toLowerCase().includes(texto))
+      .slice(0, 6);
+    caja.innerHTML = resultado.map((c) => `
+      <div data-elegir-cancha="${esc(c.nombre)}"><span>🏟 ${esc(c.nombre)}</span></div>`).join("");
+    caja.classList.toggle("oculto", !resultado.length);
+  });
+  input.addEventListener("blur", () => setTimeout(() => caja.classList.add("oculto"), 150));
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") caja.classList.add("oculto");
+  });
+  caja.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    const opcion = e.target.closest("div[data-elegir-cancha]");
+    if (!opcion) return;
+    input.value = opcion.dataset.elegirCancha;
+    caja.classList.add("oculto");
+  });
+}
+autocompletarCancha("n-cancha", "n-cancha-sugerencias");
+autocompletarCancha("p-cancha", "p-cancha-sugerencias");
 
 // pintarMultas() -> dibuja el resumen (deuda total, vencidas), los motivos de
 // multa y las tarjetas de multas, separando activos de eliminados del grupo.
@@ -634,6 +665,17 @@ document.addEventListener("click", async (e) => {
     } else if (d.borrarMotivo) {
       if (!confirm("¿Borrar este motivo de multa?")) return;
       await api(`/api/motivos/${d.borrarMotivo}`, { method: "DELETE" });
+    } else if (d.editarCancha) {
+      const cancha = (estado.canchas || []).find((x) => String(x.id) === d.editarCancha);
+      if (!cancha) return;
+      editandoCanchaId = cancha.id;
+      $("c-cancha-nueva").value = cancha.nombre;
+      $("btn-guardar-cancha").textContent = "💾 Guardar cambios";
+      $("card-cancha-nueva").classList.remove("oculto");
+      $("c-cancha-nueva").focus();
+    } else if (d.borrarCancha) {
+      if (!confirm("¿Borrar esta cancha?")) return;
+      await api(`/api/canchas/${d.borrarCancha}`, { method: "DELETE" });
     } else if (d.sacarGrupo) {
       if (!confirm("¿Sacar del grupo por no pagar al plazo y pasar sus multas a Eliminados?")) return;
       await api(`/api/jugadores/${d.sacarGrupo}`, { method: "POST", body: { expulsado: 1 } });
@@ -706,21 +748,38 @@ function cancelarEdicionPartido() {
 $("btn-cancelar-editar-partido").addEventListener("click", cancelarEdicionPartido);
 
 // ---------------------------------------------------------- cancha nueva
-$("btn-nuevo-cancha").addEventListener("click", () => {
+let editandoCanchaId = null;
+
+// resetFormCancha() -> deja el formulario de cancha en blanco y en modo alta.
+function resetFormCancha() {
+  editandoCanchaId = null;
   $("c-cancha-nueva").value = "";
+  $("btn-guardar-cancha").textContent = "Guardar cancha";
+}
+
+// abrirFormCancha() -> muestra el panel de gestión (formulario + listado).
+function abrirFormCancha() {
+  resetFormCancha();
   $("card-cancha-nueva").classList.remove("oculto");
   $("c-cancha-nueva").focus();
-});
+}
+$("btn-nuevo-cancha").addEventListener("click", abrirFormCancha);
 $("btn-cancelar-cancha").addEventListener("click", () => {
+  resetFormCancha();
   $("card-cancha-nueva").classList.add("oculto");
 });
 $("btn-guardar-cancha").addEventListener("click", async () => {
   const nombre = $("c-cancha-nueva").value.trim();
   if (!nombre) { alert("Escribe el nombre de la cancha"); return; }
   try {
-    await api("/api/canchas", { method: "POST", body: { nombre } });
+    if (editandoCanchaId) {
+      await api(`/api/canchas/${editandoCanchaId}/editar`, { method: "POST", body: { nombre } });
+    } else {
+      await api("/api/canchas", { method: "POST", body: { nombre } });
+      $("n-cancha").value = nombre;
+    }
     $("card-cancha-nueva").classList.add("oculto");
-    $("n-cancha").value = nombre;
+    resetFormCancha();
     await cargar();
   } catch (err) {
     alert(err.message);

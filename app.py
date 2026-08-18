@@ -1136,17 +1136,18 @@ def autocompletar(q, limite=10, partido_id=None):
 
 
 # canchas_lista(q, limite) -> canchas guardadas en la base (tabla "canchas"),
-# para el autocompletado del formulario de partidos. Ordena primero las que
-# empiezan con lo escrito y luego las que solo lo contienen.
+# para el autocompletado del formulario de partidos. Devuelve listas de
+# diccionarios con "id" y "nombre". Ordena primero las que empiezan con lo
+# escrito y luego las que solo lo contienen.
 def canchas_lista(q="", limite=50):
     n = normalizar(q)
-    filas = [f["nombre"] for f in DB.execute(
-        "SELECT nombre FROM canchas ORDER BY nombre COLLATE NOCASE")]
-    if not n:
-        return filas[:limite]
-    empieza = [f for f in filas if normalizar(f).startswith(n)]
-    contiene = [f for f in filas if n in normalizar(f) and f not in empieza]
-    return (empieza + contiene)[:limite]
+    filas = [dict(f) for f in DB.execute(
+        "SELECT id, nombre FROM canchas ORDER BY nombre COLLATE NOCASE")]
+    if n:
+        empieza = [f for f in filas if normalizar(f["nombre"]).startswith(n)]
+        contiene = [f for f in filas if n in normalizar(f["nombre"]) and f not in empieza]
+        filas = empieza + contiene
+    return filas[:limite]
 
 
 def agregar_cancha(nombre):
@@ -1160,6 +1161,28 @@ def agregar_cancha(nombre):
     DB.execute("INSERT INTO canchas (nombre) VALUES (?)", (nombre,))
     DB.commit()
     return {"ok": True, "cancha": nombre}
+
+
+def editar_cancha(ident, nombre):
+    """Renombra una cancha guardada (el texto de los partidos ya creados no cambia)."""
+    nombre = (nombre or "").strip()
+    if not nombre:
+        raise ErrorApp("Escribe el nombre de la cancha")
+    if not DB.execute("SELECT 1 FROM canchas WHERE id = ?", (ident,)).fetchone():
+        raise ErrorApp("Esa cancha no existe", 404)
+    if DB.execute("SELECT 1 FROM canchas WHERE nombre = ? COLLATE NOCASE AND id != ?",
+                  (nombre, ident)).fetchone():
+        raise ErrorApp("Esa cancha ya existe")
+    DB.execute("UPDATE canchas SET nombre = ? WHERE id = ?", (nombre, ident))
+    DB.commit()
+    return {"ok": True}
+
+
+def borrar_cancha(ident):
+    """Borra una cancha guardada. Los partidos que la usaban quedan con su texto."""
+    DB.execute("DELETE FROM canchas WHERE id = ?", (ident,))
+    DB.commit()
+    return {"ok": True}
 
 
 # parsear_voy("voy juan chavez (invitado de Cristian)") ->
@@ -1318,7 +1341,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         self.exigir_directiva()
-        m = re.fullmatch(r"/api/(nomina|multas|jugadores|partidos|motivos)/(\d+)(?:/(\w+))?", ruta)
+        m = re.fullmatch(r"/api/(nomina|multas|jugadores|partidos|motivos|canchas)/(\d+)(?:/(\w+))?", ruta)
         if m:
             self.enrutar_item(m.group(1), int(m.group(2)), m.group(3), datos)
         elif ruta == "/api/nomina":
@@ -1503,6 +1526,14 @@ def enrutar_item(self, recurso, ident, accion, datos):
             else:
                 raise ErrorApp("Acción inválida")
             DB.commit()
+            self.responder({"ok": True})
+        elif recurso == "canchas":
+            if self.command == "DELETE":
+                borrar_cancha(ident)
+            elif accion == "editar":
+                editar_cancha(ident, datos.get("nombre") or "")
+            else:
+                raise ErrorApp("Acción inválida")
             self.responder({"ok": True})
         elif recurso == "partidos":
             if self.command == "DELETE":

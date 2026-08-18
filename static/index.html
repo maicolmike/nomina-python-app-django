@@ -50,7 +50,10 @@
         <label>Fecha <input id="p-fecha" type="date"></label>
         <label>Hora <input id="p-hora" type="time"></label>
         <label class="ancho">Cancha
-          <select id="p-cancha"><option value="">— Elegir cancha —</option></select>
+          <div class="autocompletar">
+            <input id="p-cancha" autocomplete="off" placeholder="Escribe la cancha…">
+            <div id="p-cancha-sugerencias" class="sugerencias oculto"></div>
+          </div>
         </label>
         <div class="acciones ancho">
           <button id="btn-guardar-partido" class="btn morado">Guardar</button>
@@ -141,17 +144,20 @@
       <label>Fecha <input id="n-fecha" type="date" required></label>
       <label>Hora <input id="n-hora" type="time" required></label>
       <label class="ancho">Cancha
-        <select id="n-cancha" required><option value="">— Elegir cancha —</option></select>
+        <div class="autocompletar">
+          <input id="n-cancha" autocomplete="off" placeholder="Escribe la cancha…">
+          <div id="n-cancha-sugerencias" class="sugerencias oculto"></div>
+        </div>
       </label>
       <div class="acciones ancho">
-        <button id="btn-nuevo-cancha" class="btn claro">➕ Agregar cancha</button>
         <button id="btn-crear-partido" class="btn morado">➕ Crear partido</button>
+        <button id="btn-nuevo-cancha" class="btn claro">➕ Agregar cancha</button>
         <button id="btn-cancelar-editar-partido" class="btn claro oculto">Cancelar edición</button>
       </div>
       <p id="hint-partido-form" class="hint">La fecha, la hora y la cancha son obligatorias para crear el partido.</p>
     </div>
     <div id="card-cancha-nueva" class="tarjeta solo-directiva oculto">
-      <h3 class="titulo-tarjeta">🏟 CANCHA NUEVA</h3>
+      <h3 class="titulo-tarjeta">🏟 GESTIÓN DE CANCHAS</h3>
       <div id="form-cancha-nueva" class="rejilla">
         <label class="ancho">Nombre de la cancha <input id="c-cancha-nueva" placeholder="Ej: Coliseo las Américas"></label>
         <div class="acciones ancho">
@@ -159,6 +165,8 @@
           <button id="btn-cancelar-cancha" class="btn claro">Cancelar</button>
         </div>
       </div>
+      <h3 class="titulo-mini">CANCAS GUARDADAS</h3>
+      <div id="lista-canchas"></div>
     </div>
     <div id="lista-partidos" class="lista-tarjetas"></div>
   </section>

@@ -18,7 +18,7 @@ urlpatterns = [
     # API de colecciones (crear nómina, jugadores, multas, partidos, motivos, canchas, config)
     re_path(r"^api/(nomina|jugadores|multas|partidos|motivos|canchas|config)$", views.api_post),
     # API sobre un elemento concreto: /api/nomina/3, /api/multas/2/pagar...
-    re_path(r"^api/(nomina|multas|jugadores|partidos|motivos)/(\d+)(?:/(\w+))?$",
+    re_path(r"^api/(nomina|multas|jugadores|partidos|motivos|canchas)/(\d+)(?:/(\w+))?$",
             views.api_item),
     # Interfaz: cualquier otra ruta sirve un archivo estático (index.html, css, js)
     re_path(r"^(?P<ruta>.*)$", views.archivo),

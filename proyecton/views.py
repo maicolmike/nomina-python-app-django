@@ -336,6 +336,13 @@ def api_item(request, recurso, ident, accion=None):
         servidor.DB.commit()
         return _responder({"ok": True})
 
+    if recurso == "canchas":
+        if request.method == "DELETE":
+            return _responder(servidor.borrar_cancha(id_))
+        if accion == "editar":
+            return _responder(servidor.editar_cancha(id_, datos.get("nombre") or ""))
+        raise servidor.ErrorApp("Acción inválida")
+
     if recurso == "partidos":
         if request.method == "DELETE":
             era_activo = servidor.DB.execute(
