@@ -346,7 +346,7 @@ function pintarMultas() {
     <div class="lista-tarjetas">${activas.length ? activas.map((m) => tarjetaMulta(m, dir)).join("") : '<div class="tarjeta"><p class="vacio">Sin multas registradas.</p></div>'}</div>
     <div class="encabezado-seccion">
       <h2 class="titulo-seccion">🚫 ELIMINADOS POR NO PAGAR MULTAS <small>(${expulsados.length})</small></h2>
-      <button class="btn gris chico" data-toggle-expulsados>Ver</button>
+      <button class="btn gris chico" data-toggle-expulsados="1">Ver</button>
     </div>
     <div id="lista-expulsados" class="oculto">
       <div class="lista-tarjetas">${expulsados.length ? expulsados.map((m) => tarjetaMulta(m, dir)).join("") : '<div class="tarjeta"><p class="vacio">Sin eliminados por no pagar multas.</p></div>'}</div>
