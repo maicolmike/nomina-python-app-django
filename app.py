@@ -995,12 +995,16 @@ def anotar(datos):
         if any(normalizar(r["nombre_libre"]) == normalizar(nombre) for r in registrados):
             raise ErrorApp(f"{nombre} ya está registrad@")
         lista = datos.get("lista")
+        # Elegir "Nómina" a mano es decisión de la directiva: ignora el corte de
+        # invitados (pero el modo "Automático" sigue respetando las reglas).
+        manual_nomina = lista == "nomina"
         if lista not in ("nomina", "espera"):
             lista = "nomina" if puede_entrar_nomina(partido["id"], genero, c) else "espera"
         if lista == "nomina" and not puede_entrar_nomina(partido["id"], genero, c) \
-                and not datos.get("forzar"):
+                and not (datos.get("forzar") or manual_nomina):
             lista = "espera"
-        if lista == "nomina" and not permite_invitados(partido) and not datos.get("forzar"):
+        if lista == "nomina" and not permite_invitados(partido) \
+                and not (datos.get("forzar") or manual_nomina):
             lista = "espera"
         ahora = datetime.now().isoformat(timespec="seconds")
         DB.execute(
@@ -1022,6 +1026,7 @@ def anotar(datos):
     items = anotados(partido["id"])
     nomina = [i for i in items if i["lista"] == "nomina"]
     lista = datos.get("lista")
+    manual = lista == "nomina"
     if lista not in ("nomina", "espera"):
         usados = sum(1 for i in nomina if i["genero"] == p["genero"])
         limite = cupo_por_genero(c, p["genero"])
@@ -1032,7 +1037,10 @@ def anotar(datos):
         else:
             lista = "espera"
     if lista == "nomina":
-        if not p["miembro"] and not permite_invitados(partido) and not datos.get("forzar"):
+        # Si la directiva eligió "Nómina" a mano, se ignora el corte de invitados
+        # (decisión de la directiva); el modo "Automático" sí lo respeta.
+        if not p["miembro"] and not permite_invitados(partido) \
+                and not (datos.get("forzar") or manual):
             lista = "espera"
         elif not puede_entrar_nomina(partido["id"], p["genero"], c):
             if not datos.get("forzar"):
