@@ -112,6 +112,8 @@ function pintar() {
   // El historial de partidos siempre arranca oculto: solo se ve al pulsar "Ver".
   $("card-historial").classList.add("oculto");
   $("btn-ver-historial").textContent = "Ver";
+  // El formulario de partido solo aparece al pulsar "Crear partido".
+  $("card-crear-partido").classList.add("oculto");
   $("btn-login").classList.toggle("oculto", dir || !estado.requiere_pin);
   $("btn-logout").classList.toggle("oculto", !dir || !estado.requiere_pin);
 
