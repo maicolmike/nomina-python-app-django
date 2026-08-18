@@ -129,6 +129,7 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn.claro { background: #eef0f4; color: var(--texto); }
 .btn.chico { padding: 5px 10px; font-size: .74rem; }
 .btn.ancho { width: 100%; margin-top: 10px; }
+.btn.morado:hover { background: #198754; color: #fff; }
 .btn:hover { filter: brightness(1.08); }
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .paginacion { justify-content: center; align-items: center; font-size: .78rem; }
