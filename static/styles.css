@@ -137,7 +137,7 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn[data-abonar]:hover,
 .btn[data-reintegrar]:hover,
 #btn-ver-historial:hover { background: #198754; color: #fff; }
-.btn[data-pagar]:hover { background: #0dcaf0; color: #fff; }
+.btn[data-pagar]:hover { background: #0d6efd; color: #fff; }
 .btn.warning { background: #ffc107; color: #1f2937; }
 .btn.gris { background: #6b7280; color: #fff; }
 .btn:hover { filter: brightness(1.08); }
