@@ -137,6 +137,10 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn[data-ver-partido]:hover,
 .btn[data-abonar]:hover,
 .btn[data-reintegrar]:hover,
+.btn[data-jug-prev]:hover,
+.btn[data-jug-next]:hover,
+.btn[data-hist-prev]:hover,
+.btn[data-hist-next]:hover,
 #btn-ver-historial:hover { background: #198754; color: #fff; }
 .btn[data-pagar]:hover { background: #0d6efd; color: #fff; }
 .btn.warning { background: #ffc107; color: #1f2937; }
