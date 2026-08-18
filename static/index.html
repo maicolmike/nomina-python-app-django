@@ -193,7 +193,6 @@
       <label class="ancho">Motivo
         <select id="m-motivo-comun"><option value="">— Elegir motivo común —</option></select></label>
       <div class="rejilla">
-        <label>Valor ($) <input id="m-valor" type="number" min="0" step="500" required></label>
         <label>Fecha de la multa <input id="m-fecha" type="date" required></label>
         <label>Abono ($) <input id="m-abono" type="number" min="0" step="500" value="0"></label>
         <label>Plazo máximo <input id="m-plazo" type="date"></label>
@@ -206,7 +205,7 @@
       <p class="hint">Para registrar una multa se necesita: el jugador, el motivo y la fecha de la multa.</p>
     </div>
     <div id="card-motivos-personalizados" class="tarjeta solo-directiva oculto">
-      <h3 class="titulo-tarjeta">🏷️ MOTIVOS PERSONALIZADOS</h3>
+      <h3 class="titulo-tarjeta">🏷️ MOTIVOS DE MULTA</h3>
       <div id="form-motivo-nuevo" class="rejilla">
         <label>Motivo <input id="m-motivo-nuevo" placeholder="Ej: lavarse la cabeza"></label>
         <label>Valor ($) <input id="m-motivo-nuevo-valor" type="number" min="0" step="500"></label>
@@ -242,14 +241,6 @@
       <h3 class="titulo-tarjeta">⚙️ CONFIGURACIÓN</h3>
       <div class="rejilla solo-directiva">
         <label class="ancho">Nombre del grupo <input id="cf-nombre_grupo"></label>
-        <label class="ancho titulo-mini">💰 VALORES DE MULTA ($)</label>
-        <label>Llegó tarde <input id="cf-multa_tarde" type="number" min="0"></label>
-        <label>No se alistó <input id="cf-multa_no_alisto" type="number" min="0"></label>
-        <label>No asistió <input id="cf-multa_no_asistio" type="number" min="0"></label>
-        <label>Salió antes <input id="cf-multa_salio" type="number" min="0"></label>
-        <label>Agresión <input id="cf-multa_agresion" type="number" min="0"></label>
-        <label>Falta con lesión <input id="cf-multa_falta" type="number" min="0"></label>
-        <label>Reingreso <input id="cf-multa_reingreso" type="number" min="0"></label>
         <label>Plazo para pagar (días) <input id="cf-plazo_dias" type="number" min="1"></label>
         <label class="ancho">PIN de la directiva (vacío = no cambiar · escribe SIN-PIN para quitarlo)
           <input id="cf-pin" placeholder="Nuevo PIN"></label>

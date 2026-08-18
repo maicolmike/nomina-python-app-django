@@ -272,13 +272,13 @@ function pintarMultas() {
     + estado.motivos_multa.map((m) =>
       `<option value="${m.valor}" data-texto="${esc(m.texto)}">${esc(motivoCorto(m.texto))} (${pesos(m.valor)})</option>`).join("");
 
-  const personalizados = estado.motivos_multa.filter((m) => m.personalizado);
-  $("lista-motivos").innerHTML = personalizados.length ? personalizados.map((m) => `
+  const motivos = estado.motivos_multa;
+  $("lista-motivos").innerHTML = motivos.length ? motivos.map((m) => `
     <div class="fila">
       <span class="nombre">${esc(m.texto)} <span class="etq naranja">${pesos(m.valor)}</span></span>
       <button class="icono" data-editar-motivo="${m.id}" title="Editar motivo">✏️</button>
       <button class="icono" data-borrar-motivo="${m.id}" title="Borrar motivo">🗑</button>
-    </div>`).join("") : '<p class="vacio">Sin motivos personalizados. Agrega uno aquí arriba.</p>';
+    </div>`).join("") : '<p class="vacio">Sin motivos de multa. Agrega uno aquí arriba.</p>';
 
   const activas = estado.multas.filter((m) => !m.expulsado);
   const expulsados = estado.multas.filter((m) => m.expulsado);
@@ -858,16 +858,17 @@ $("btn-crear-partido").addEventListener("click", async () => {
 // ---------------------------------------------------------- editar multas
 let editandoMultaId = null;  // id de la multa que se está editando (null = nueva)
 let multaJugadorId = null;   // id del jugador de la multa (lo elige el autocompletado)
+let multaValorOriginal = null;  // valor guardado de la multa en edición
 
 // abrirEditarMulta(m) -> llena el formulario con los datos de una multa
 // existente para poder modificarla.
 function abrirEditarMulta(m) {
   editandoMultaId = m.id;
+  multaValorOriginal = m.valor;
   const mot = (m.motivo || "").trim();
   const coincide = [...$("m-motivo-comun").options].find((o) =>
     o.dataset.texto && o.dataset.texto.trim().toLowerCase() === mot.toLowerCase());
   $("m-motivo-comun").value = coincide ? coincide.value : "";
-  $("m-valor").value = m.valor;
   $("m-abono").value = m.abono || 0;
   $("m-fecha").value = m.fecha;
   $("m-plazo").value = m.plazo || "";
@@ -882,12 +883,13 @@ function abrirEditarMulta(m) {
 function cerrarEditarMulta() {
   editandoMultaId = null;
   multaJugadorId = null;
+  multaValorOriginal = null;
   $("btn-guardar-multa").textContent = "Registrar multa";
   $("btn-cancelar-editar-multa").classList.add("oculto");
   $("m-motivo-comun").value = "";
 }
 
-// limpiarFormMotivo() -> deja en blanco el formulario de motivos personalizados.
+// limpiarFormMotivo() -> deja en blanco el formulario de motivos de multa.
 function limpiarFormMotivo() {
   editandoMotivoId = null;
   $("m-motivo-nuevo").value = "";
@@ -896,7 +898,7 @@ function limpiarFormMotivo() {
   $("card-motivos-personalizados").classList.add("oculto");
 }
 // abrirFormMotivo(mot) -> muestra el formulario para agregar o editar un motivo
-// de multa personalizado (si "mot" viene con datos, es edición).
+// de multa (si "mot" viene con datos, es edición).
 function abrirFormMotivo(mot) {
   $("m-motivo-nuevo").value = mot ? mot.texto : "";
   $("m-motivo-nuevo-valor").value = mot ? mot.valor : "";
@@ -928,11 +930,6 @@ $("btn-guardar-motivo").addEventListener("click", async () => {
   }
 });
 
-$("m-motivo-comun").addEventListener("change", (e) => {
-  const op = e.target.selectedOptions[0];
-  if (!op.value) return;
-  $("m-valor").value = op.value;
-});
 // Autocompletado de jugador en el formulario de multa (igual que «voy»).
 let multaJugadorSugeridas = [];
 let multaJugadorActivo = -1;
@@ -1006,10 +1003,12 @@ $("btn-cancelar-editar-multa").addEventListener("click", () => {
 });
 $("btn-guardar-multa").addEventListener("click", async () => {
   const opMotivo = $("m-motivo-comun").selectedOptions[0];
+  // El valor de la multa sale del motivo elegido (ya no hay campo propio).
+  const valor = opMotivo && opMotivo.value ? opMotivo.value : (multaValorOriginal || 0);
   const cuerpo = {
     participante_id: multaJugadorId,
     fecha: $("m-fecha").value,
-    valor: $("m-valor").value,
+    valor,
     abono: $("m-abono").value,
     motivo: opMotivo && opMotivo.dataset.texto ? opMotivo.dataset.texto : "",
     plazo: $("m-plazo").value,

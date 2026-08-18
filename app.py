@@ -166,7 +166,7 @@ MULTAS_SEED = [
 #  - nomina:       quién está anotado en cada partido (nómina o lista de espera).
 #                  Un invitado sin ficha se guarda con nombre_libre/genero_libre.
 #  - multas:       las multas de cada jugador (valor, abonos, plazo, estado)
-#  - motivos_multa: motivos de multa personalizados que agrega la directiva
+#  - motivos_multa: motivos de multa (los fijos y los que agrega la directiva)
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS config (clave TEXT PRIMARY KEY, valor TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS participantes (
@@ -383,11 +383,27 @@ def init_db():
         migrar_canchas(con)
         for clave, valor in CONFIG_DEFAULT.items():
             con.execute("INSERT OR IGNORE INTO config (clave, valor) VALUES (?,?)", (clave, valor))
+        migrar_motivos(con)
         if not con.execute("SELECT 1 FROM participantes LIMIT 1").fetchone():
             sembrar(con)
         con.commit()
     finally:
         con.close()
+
+
+def migrar_motivos(con):
+    """Pasa los motivos fijos de multa (Llegó tarde, No asistió...) de la
+    configuración a la tabla motivos_multa, para que la directiva los edite en
+    el módulo de Multas igual que los personalizados. Solo aplica la primera
+    vez: no pisa motivos que ya existan en la tabla."""
+    valores = dict(con.execute("SELECT clave, valor FROM config").fetchall())
+    for clave, texto in MOTIVOS_MULTA:
+        if con.execute("SELECT 1 FROM motivos_multa WHERE texto = ? COLLATE NOCASE",
+                       (texto,)).fetchone():
+            continue
+        valor = entero(valores.get(clave), 0) or entero(CONFIG_DEFAULT.get(clave), 0)
+        if valor > 0:
+            con.execute("INSERT INTO motivos_multa (texto, valor) VALUES (?,?)", (texto, valor))
 
 
 def migrar_nomina(con):
@@ -721,7 +737,9 @@ def jugadores_lista():
     return salida
 
 
-def motivos_personalizados():
+# motivos_multa_lista() -> todos los motivos de multa (los fijos y los que
+# agrega la directiva), ordenados por nombre.
+def motivos_multa_lista():
     return [dict(f) for f in DB.execute(
         "SELECT * FROM motivos_multa ORDER BY texto COLLATE NOCASE")]
 
@@ -786,12 +804,8 @@ def estado_completo(rol, partido_id=None):
         "requiere_pin": bool(c["pin"].strip()),
         "config": {k: c[k] for k in CONFIG_DEFAULT if k != "pin"},
         "motivos_multa": [
-            {"clave": k, "texto": t, "valor": entero(c.get(k), 0), "personalizado": False}
-            for k, t in MOTIVOS_MULTA
-        ] + [
-            {"clave": None, "id": m["id"], "texto": m["texto"], "valor": m["valor"],
-             "personalizado": True}
-            for m in motivos_personalizados()
+            {"id": m["id"], "texto": m["texto"], "valor": m["valor"]}
+            for m in motivos_multa_lista()
         ],
         "partido": partido,
         "partido_vista_id": partido["id"] if partido else None,
