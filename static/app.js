@@ -760,7 +760,6 @@ document.addEventListener("click", async (e) => {
       $("n-cancha").value = p.cancha;
       editandoPartidoId = p.id;
       $("btn-crear-partido").textContent = "💾 Guardar cambios del partido";
-      $("btn-cancelar-editar-partido").classList.remove("oculto");
       $("hint-partido-form").textContent = "Estás editando el partido guardado. Guarda los cambios o cancela.";
       document.querySelector('.tabs button[data-tab="partidos"]').click();
       mostrarFormPartido();
@@ -866,10 +865,10 @@ function cancelarEdicionPartido() {
   $("n-hora").value = "";
   $("n-cancha").value = "";
   $("btn-crear-partido").textContent = "Guardar";
-  $("btn-cancelar-editar-partido").classList.add("oculto");
+  $("card-crear-partido").classList.add("oculto");
   $("hint-partido-form").textContent = "La fecha, la hora y la cancha son obligatorias para crear el partido.";
 }
-$("btn-cancelar-editar-partido").addEventListener("click", cancelarEdicionPartido);
+$("btn-cancelar-partido-top").addEventListener("click", cancelarEdicionPartido);
 $("btn-nuevo-partido-top").addEventListener("click", () => {
   const card = $("card-crear-partido");
   if (card.classList.contains("oculto")) {
