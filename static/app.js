@@ -74,12 +74,21 @@ function pintarReglamento(texto) {
 }
 
 // aviso(texto, error) -> muestra un mensaje temporal debajo del buscador.
-// Con "error" = true se pinta en rojo.
+// Con "error" = true se pinta en rojo. El mensaje se oculta solo a los 5
+// segundos (no debe quedar pegado en pantalla).
+let avisoTimer = null;
 function aviso(texto, error = false) {
   const el = $("aviso");
   el.textContent = texto || "";
   el.classList.toggle("error", error);
   el.classList.toggle("oculto", !texto);
+  clearTimeout(avisoTimer);
+  if (texto) {
+    avisoTimer = setTimeout(() => {
+      el.textContent = "";
+      el.classList.add("oculto");
+    }, 5000);
+  }
 }
 
 // cargar(id) -> pide al servidor el estado completo (o el de un partido con id)
@@ -595,6 +604,7 @@ async function anotar(forzar = false) {
     const r = await api("/api/nomina", { method: "POST", body: cuerpo });
     $("buscar").value = "";
     $("a-invita").value = "";
+    $("a-destino").value = "";  // siempre vuelve a "Automático (reglas)"
     seleccionado = null;
     aviso(`${r.nombre} anotad@ en ${r.lista === "nomina" ? "la nómina" : "lista de espera"}.`
       + (r.aviso ? " " + r.aviso : ""));
@@ -1194,6 +1204,15 @@ $("btn-logout").addEventListener("click", async () => {
 });
 
 $("m-fecha").value = new Date().toISOString().slice(0, 10);
+
+// Al cargar (o volver a la pestaña con el estado restaurado del navegador),
+// el destino siempre queda en "Automático (reglas)" y sin mensajes viejos.
+window.addEventListener("pageshow", () => {
+  $("a-destino").value = "";
+  $("aviso").textContent = "";
+  $("aviso").classList.add("oculto");
+});
+
 cargar().then(() => {
   const guardada = localStorage.getItem("pestana");
   const valida = guardada && document.querySelector(`.tabs button[data-tab="${guardada}"]`);
