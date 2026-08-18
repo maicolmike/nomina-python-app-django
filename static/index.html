@@ -95,7 +95,9 @@
     <h2 class="titulo-seccion">⏳ LISTA DE ESPERA</h2>
     <div id="lista-espera" class="tarjeta lista"></div>
 
-    <div class="tarjeta solo-directiva">
+    <div id="nota-guardado" class="aviso oculto">🔒 Partido en el historial: solo lectura. Para volver a anotar o editar, abre su nómina desde Partidos.</div>
+
+    <div id="card-anotar" class="tarjeta solo-directiva">
       <h3 class="titulo-tarjeta">➕ ANOTAR «VOY»</h3>
       <div class="autocompletar">
         <input id="buscar" autocomplete="off" placeholder="voy + nombre y apellido">
@@ -152,14 +154,9 @@
       <div class="acciones ancho">
         <button id="btn-crear-partido" class="btn morado">➕ Crear partido</button>
         <button id="btn-nuevo-cancha" class="btn claro">➕ Agregar cancha</button>
-        <button id="btn-historial" class="btn claro">🗂 Historial de partidos</button>
         <button id="btn-cancelar-editar-partido" class="btn claro oculto">Cancelar edición</button>
       </div>
       <p id="hint-partido-form" class="hint">La fecha, la hora y la cancha son obligatorias para crear el partido.</p>
-    </div>
-    <div id="card-historial" class="tarjeta oculto">
-      <h3 class="titulo-tarjeta">🗂 HISTORIAL DE PARTIDOS</h3>
-      <div id="historial-partidos"></div>
     </div>
     <div id="card-cancha-nueva" class="tarjeta solo-directiva oculto">
       <h3 class="titulo-tarjeta">🏟 GESTIÓN DE CANCHAS</h3>
@@ -174,7 +171,12 @@
       <div id="lista-canchas"></div>
     </div>
     <div id="lista-partidos" class="lista-tarjetas"></div>
-    <p class="hint">💾 Guardar archiva el partido en el historial y ya no aparece aquí.</p>
+    <h2 class="titulo-seccion solo-directiva">🗂 HISTORIAL DE PARTIDOS
+      <button id="btn-ver-historial" class="btn claro chico">Ver</button></h2>
+    <div id="card-historial" class="tarjeta solo-directiva oculto">
+      <div id="historial-partidos"></div>
+    </div>
+    <p class="hint">💾 Guardar archiva el partido en el historial (queda de solo lectura). Abrir nómina lo devuelve a la lista para editarlo.</p>
   </section>
 
   <!-- ============================================================ MULTAS -->

@@ -136,6 +136,12 @@ function pintar() {
 // divididas por género, con los cupos usados y las barras de progreso.
 function pintarNomina() {
   const dir = estado.rol === "directiva";
+  // Un partido guardado en el historial es de solo lectura: no se anota gente
+  // ni se mueve/quita a nadie hasta abrir su nómina desde Partidos.
+  const guardado = estado.partido && estado.partido.estado === "guardado";
+  const editable = dir && !guardado;
+  $("card-anotar").classList.toggle("oculto", guardado);
+  $("nota-guardado").classList.toggle("oculto", !guardado);
   const { mujeres, hombres, usadas_f: uf, usadas_m: um } = estado.cupos;
   const total = mujeres + hombres;
   $("c-mujeres").textContent = `${uf}/${mujeres}`;
@@ -152,21 +158,21 @@ function pintarNomina() {
   $("lista-nomina").innerHTML = `
     <div class="grupo-genero femenino">
       <div class="encabezado-genero">🌹 Mujeres <span>${nominaF.length}/${mujeres}</span></div>
-      ${nominaF.length ? nominaF.map((i, n) => filaJugador(i, n + 1, dir, "espera")).join("") : '<p class="vacio">Sin mujeres en la nómina.</p>'}
+      ${nominaF.length ? nominaF.map((i, n) => filaJugador(i, n + 1, editable, "espera")).join("") : '<p class="vacio">Sin mujeres en la nómina.</p>'}
     </div>
     <div class="grupo-genero masculino">
       <div class="encabezado-genero">⚽ Hombres <span>${nominaM.length}/${hombres}</span></div>
-      ${nominaM.length ? nominaM.map((i, n) => filaJugador(i, n + 1, dir, "espera")).join("") : '<p class="vacio">Sin hombres en la nómina.</p>'}
+      ${nominaM.length ? nominaM.map((i, n) => filaJugador(i, n + 1, editable, "espera")).join("") : '<p class="vacio">Sin hombres en la nómina.</p>'}
     </div>`;
 
   $("lista-espera").innerHTML = `
     <div class="grupo-genero femenino">
       <div class="encabezado-genero">🌹 Mujeres <span>${esperaF.length}</span></div>
-      ${esperaF.length ? esperaF.map((i, n) => filaJugador(i, n + 1, dir, "nomina")).join("") : '<p class="vacio">Sin mujeres en espera.</p>'}
+      ${esperaF.length ? esperaF.map((i, n) => filaJugador(i, n + 1, editable, "nomina")).join("") : '<p class="vacio">Sin mujeres en espera.</p>'}
     </div>
     <div class="grupo-genero masculino">
       <div class="encabezado-genero">⚽ Hombres <span>${esperaM.length}</span></div>
-      ${esperaM.length ? esperaM.map((i, n) => filaJugador(i, n + 1, dir, "nomina")).join("") : '<p class="vacio">Sin hombres en espera.</p>'}
+      ${esperaM.length ? esperaM.map((i, n) => filaJugador(i, n + 1, editable, "nomina")).join("") : '<p class="vacio">Sin hombres en espera.</p>'}
     </div>`;
 
   $("hint-corte").textContent = estado.corte_invitados.texto
@@ -209,9 +215,9 @@ function pintarPartidos() {
           ${String(p.id) === String(vistaId) && String(p.id) !== String(activoId)
             ? '<span class="etq morada">viendo</span>' : ""}
           ${dir ? `
-            <button class="btn claro chico" data-guardar-partido="${p.id}" title="Archiva el partido en el historial">💾 Guardar</button>
             <button class="btn claro chico" data-usar-partido="${p.id}">Usar</button>
             <button class="icono" data-editar-partido="${p.id}" title="Editar">✏️</button>
+            <button class="icono" data-guardar-partido="${p.id}" title="Guardar en historial">💾</button>
             <button class="icono" data-borrar-partido="${p.id}" title="Borrar">🗑</button>`
             : `<button class="btn claro chico" data-ver-partido="${p.id}">Ver nómina</button>`}
         </div>
@@ -229,6 +235,7 @@ function pintarHistorial() {
     <div class="fila">
       <span class="nombre"><b>${esc(p.fecha_es)} · ${esc(p.hora_es)}</b>
         <span class="detalle">${esc(p.cancha)} · ${p.en_nomina} en nómina · ${p.en_espera} en espera</span></span>
+      <button class="btn claro chico" data-abrir-nomina="${p.id}">Abrir nómina</button>
       <button class="btn claro chico" data-ver-partido="${p.id}">Ver nómina</button>
     </div>`).join("")
     : '<p class="vacio">Aún no hay partidos en el historial. Guarda un partido desde la lista de arriba para archivarlo aquí.</p>';
@@ -630,6 +637,14 @@ document.addEventListener("click", async (e) => {
       if (!confirm("¿Guardar este partido en el historial? Ya no aparecerá en la lista de partidos.")) return;
       await api(`/api/partidos/${d.guardarPartido}/guardar`, { method: "POST", body: {} });
       $("card-historial").classList.remove("oculto");
+      $("btn-ver-historial").textContent = "Ocultar";
+    } else if (d.abrirNomina) {
+      if (!confirm("¿Abrir la nómina de este partido? Volverá a la lista de partidos y se podrá editar.")) return;
+      await api(`/api/partidos/${d.abrirNomina}/abrir`, { method: "POST", body: {} });
+      partidoEnVista = d.abrirNomina;
+      await cargar(partidoEnVista);
+      document.querySelector('.tabs button[data-tab="nomina"]').click();
+      return;
     } else if (d.verPartido) {
       partidoEnVista = d.verPartido;
       await cargar(partidoEnVista);
@@ -770,9 +785,11 @@ function abrirFormCancha() {
   $("c-cancha-nueva").focus();
 }
 $("btn-nuevo-cancha").addEventListener("click", abrirFormCancha);
-$("btn-historial").addEventListener("click", () => {
-  $("card-historial").classList.toggle("oculto");
+$("btn-ver-historial").addEventListener("click", () => {
+  const card = $("card-historial");
+  card.classList.toggle("oculto");
   pintarHistorial();
+  $("btn-ver-historial").textContent = card.classList.contains("oculto") ? "Ver" : "Ocultar";
 });
 $("btn-cancelar-cancha").addEventListener("click", () => {
   resetFormCancha();

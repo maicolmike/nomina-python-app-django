@@ -228,6 +228,10 @@ def api_item(request, recurso, ident, accion=None):
             ).fetchone()
             if not fila:
                 raise servidor.ErrorApp("Registro no encontrado", 404)
+            est = servidor.DB.execute(
+                "SELECT estado FROM partidos WHERE id = ?", (fila["partido_id"],)).fetchone()
+            if est and est["estado"] == "guardado":
+                raise servidor.ErrorApp("El partido está en el historial: no se puede mover gente")
             c = servidor.cfg()
             genero = fila["genero"] or fila["genero_libre"]
             if datos["lista"] == "nomina":
@@ -358,10 +362,17 @@ def api_item(request, recurso, ident, accion=None):
                     servidor.DB.execute("UPDATE partidos SET activo = 1 WHERE id = ?", (resto["id"],))
         elif accion == "guardar":
             return _responder(servidor.guardar_partido(id_))
+        elif accion == "abrir":
+            fila = servidor.DB.execute("SELECT estado FROM partidos WHERE id = ?", (id_,)).fetchone()
+            if not fila:
+                raise servidor.ErrorApp("El partido no existe", 404)
+            servidor.DB.execute("UPDATE partidos SET estado = 'abierta' WHERE id = ?", (id_,))
         elif accion == "usar":
+            servidor.verificar_partido_editable(id_)
             servidor.DB.execute("UPDATE partidos SET activo = 0 WHERE activo = 1")
             servidor.DB.execute("UPDATE partidos SET activo = 1 WHERE id = ?", (id_,))
         elif accion == "editar":
+            servidor.verificar_partido_editable(id_)
             for k in ("fecha", "hora", "cancha"):
                 if datos.get(k):
                     servidor.DB.execute(f"UPDATE partidos SET {k} = ? WHERE id = ?", (datos[k], id_))

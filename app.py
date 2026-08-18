@@ -805,6 +805,16 @@ def guardar_partido(ident):
     return {"ok": True}
 
 
+def verificar_partido_editable(ident):
+    """Un partido en el historial es de solo lectura: no se puede usar, editar
+    ni anotar gente. Solo "abrir nómina" lo devuelve a los partidos en curso."""
+    fila = DB.execute("SELECT estado FROM partidos WHERE id = ?", (ident,)).fetchone()
+    if not fila:
+        raise ErrorApp("El partido no existe", 404)
+    if fila["estado"] == "guardado":
+        raise ErrorApp("El partido está en el historial: abre su nómina para volver a editarlo")
+
+
 # estado_completo(rol, partido_id) -> TODO lo que necesita la interfaz para
 # pintar la pantalla: configuración, partido en uso, nómina, espera, cupos,
 # multas, jugadores, partidos y el texto de WhatsApp. Es la petición
@@ -1023,6 +1033,8 @@ def anotar(datos):
         partido = dict(fila)
     if not partido:
         raise ErrorApp("No hay partido en uso. Crea uno o usa un partido guardado desde la pestaña Partidos.")
+    if partido.get("estado") == "guardado":
+        raise ErrorApp("El partido está en el historial: abre su nómina para volver a editarlo")
     es_invitado = not bool(datos.get("miembro"))
     pid = datos.get("participante_id")
     nombre = (datos.get("nombre") or "").strip()
@@ -1130,6 +1142,11 @@ def quitar(nid):
     ).fetchone()
     if not fila:
         raise ErrorApp("Registro no encontrado", 404)
+    if fila["partido_id"]:
+        est = DB.execute("SELECT estado FROM partidos WHERE id = ?",
+                         (fila["partido_id"],)).fetchone()
+        if est and est["estado"] == "guardado":
+            raise ErrorApp("El partido está en el historial: no se puede quitar gente")
     DB.execute("DELETE FROM nomina WHERE id = ?", (nid,))
     DB.commit()
     nombre = fila["nombre"] or fila["nombre_libre"]
