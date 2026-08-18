@@ -260,6 +260,35 @@ textarea { font-size: .85rem; }
 }
 .encabezado-fila .nombre { flex: 1; }
 .encabezado-fila .partidos { width: 54px; text-align: center; flex-shrink: 0; }
+
+/* Lista de jugadores: nombre arriba, etiquetas debajo, a la derecha
+   el n° de partidos y las acciones en su propia columna. */
+#lista-jugadores .encabezado-fila,
+#lista-jugadores .fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px auto;
+  gap: 10px;
+  align-items: center;
+}
+#lista-jugadores .fila .nombre {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1.25;
+}
+#lista-jugadores .fila .etiquetas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-weight: 400;
+}
+#lista-jugadores .fila .acciones {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+#lista-jugadores .encabezado-fila .acciones { text-align: right; }
 .vacio { color: #9ca3af; font-style: italic; padding: 10px 6px; font-size: .88rem; }
 .lista-tarjetas .tarjeta { padding: 12px 14px; }
 .encabezado-fila { display: flex; justify-content: space-between; gap: 10px; align-items: start; }

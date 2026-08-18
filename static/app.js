@@ -406,24 +406,33 @@ function pintarJugadores() {
   const pagina = estado.jugadores.slice(desde, desde + JUGADORES_POR_PAGINA);
   $("lista-jugadores").innerHTML = (estado.jugadores.length
       ? '<div class="encabezado-fila"><span class="nombre">Nombre</span>'
-        + '<span class="partidos" title="Partidos jugados en el historial">N° partidos</span></div>'
+        + '<span class="partidos" title="Partidos jugados en el historial">N° partidos</span>'
+        + (dir ? '<span class="acciones">Acciones</span>' : "") + '</div>'
       : "")
-    + pagina.map((j) => `
+    + pagina.map((j) => {
+      const etiquetas =
+          (j.activo ? "" : '<span class="etq gris">inactivo</span>')
+        + (j.expulsado ? '<span class="etq roja">expulsado</span>' : "")
+        + (j.miembro ? "" : '<span class="etq gris">invitad@</span>')
+        + (j.deuda ? `<span class="etq naranja">debe ${pesos(j.deuda)}</span>` : "");
+      return `
     <div class="fila" data-jugador="${j.id}">
-      <span class="nombre">${emoji(j.genero)} <span class="n-jugador">${esc(j.nombre)}</span>
-        ${j.activo ? "" : '<span class="etq gris">inactivo</span>'}
-        ${j.expulsado ? '<span class="etq roja">expulsado</span>' : ""}
-        ${j.miembro ? "" : '<span class="etq gris">invitad@</span>'}
-        ${j.deuda ? `<span class="etq naranja">debe ${pesos(j.deuda)}</span>` : ""}</span>
-      <span class="partidos">${j.partidos || 0}</span>
+      <span class="nombre">
+        <span>${emoji(j.genero)} ${esc(j.nombre)}</span>
+        ${etiquetas ? `<span class="etiquetas">${etiquetas}</span>` : ""}
+      </span>
+      <span class="partidos" title="Partidos jugados en el historial">${j.partidos || 0}</span>
       ${dir ? `
+      <span class="acciones">
         <button class="icono" data-editar-jugador="${j.id}" title="Editar nombre">✏️</button>
         <button class="icono" data-activo="${j.id}" data-valor="${j.activo ? 0 : 1}"
           title="${j.activo ? "Inactivar" : "Activar"}">${j.activo ? "🚫" : "✔️"}</button>
         <button class="icono" data-expulsado="${j.id}" data-valor="${j.expulsado ? 0 : 1}"
           title="${j.expulsado ? "Readmitir" : "Expulsar por multas"}">${j.expulsado ? "🔓" : "🔒"}</button>
-<button class="icono" data-borrar-jugador="${j.id}" title="Borrar">🗑</button>` : ""}
-      </div>`).join("")
+        <button class="icono" data-borrar-jugador="${j.id}" title="Borrar">🗑</button>
+      </span>` : ""}
+      </div>`;
+    }).join("")
     + (estado.jugadores.length > JUGADORES_POR_PAGINA ? `
     <div class="acciones paginacion">
       <button class="btn claro chico" data-jug-prev="1" ${jugadoresPagina <= 1 ? "disabled" : ""}>‹ Anterior</button>
