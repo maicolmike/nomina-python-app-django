@@ -404,13 +404,18 @@ function pintarJugadores() {
   jugadoresPagina = Math.max(1, Math.min(jugadoresPagina, totalPaginas));
   const desde = (jugadoresPagina - 1) * JUGADORES_POR_PAGINA;
   const pagina = estado.jugadores.slice(desde, desde + JUGADORES_POR_PAGINA);
-  $("lista-jugadores").innerHTML = pagina.map((j) => `
+  $("lista-jugadores").innerHTML = (estado.jugadores.length
+      ? '<div class="encabezado-fila"><span class="nombre">Nombre</span>'
+        + '<span class="partidos" title="Partidos jugados en el historial">N° partidos</span></div>'
+      : "")
+    + pagina.map((j) => `
     <div class="fila" data-jugador="${j.id}">
-      <span class="nombre">${emoji(j.genero)} ${esc(j.nombre)}
+      <span class="nombre">${emoji(j.genero)} <span class="n-jugador">${esc(j.nombre)}</span>
         ${j.activo ? "" : '<span class="etq gris">inactivo</span>'}
         ${j.expulsado ? '<span class="etq roja">expulsado</span>' : ""}
         ${j.miembro ? "" : '<span class="etq gris">invitad@</span>'}
         ${j.deuda ? `<span class="etq naranja">debe ${pesos(j.deuda)}</span>` : ""}</span>
+      <span class="partidos">${j.partidos || 0}</span>
       ${dir ? `
         <button class="icono" data-editar-jugador="${j.id}" title="Editar nombre">✏️</button>
         <button class="icono" data-activo="${j.id}" data-valor="${j.activo ? 0 : 1}"

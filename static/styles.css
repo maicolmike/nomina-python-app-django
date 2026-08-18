@@ -235,6 +235,31 @@ textarea { font-size: .85rem; }
 .fila .num { color: var(--suave); font-size: .8rem; width: 20px; text-align: right; }
 .fila .nombre { flex: 1; font-weight: 600; }
 .fila .nombre small { font-weight: 400; color: var(--suave); }
+.fila .partidos {
+  flex-shrink: 0;
+  width: 54px;
+  text-align: center;
+  background: rgba(59, 15, 122, .08);
+  color: var(--morado);
+  font-weight: 700;
+  font-size: .85rem;
+  border-radius: 999px;
+  padding: 2px 0;
+}
+.encabezado-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 6px 4px;
+  color: var(--suave);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--borde);
+}
+.encabezado-fila .nombre { flex: 1; }
+.encabezado-fila .partidos { width: 54px; text-align: center; flex-shrink: 0; }
 .vacio { color: #9ca3af; font-style: italic; padding: 10px 6px; font-size: .88rem; }
 .lista-tarjetas .tarjeta { padding: 12px 14px; }
 .encabezado-fila { display: flex; justify-content: space-between; gap: 10px; align-items: start; }

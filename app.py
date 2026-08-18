@@ -730,10 +730,18 @@ def jugadores_lista():
             "SELECT participante_id, SUM(valor - abono) deuda FROM multas"
             " WHERE estado = 'pendiente' GROUP BY participante_id")
     }
+    # Cuántos partidos guardados (historial) tiene cada jugador: los partidos
+    # donde aparece en la nómina. Se recalcula solo con cada guardar/borrar.
+    partidos_jugador = dict(DB.execute(
+        "SELECT n.participante_id, COUNT(DISTINCT n.partido_id)"
+        " FROM nomina n JOIN partidos p ON p.id = n.partido_id"
+        " WHERE n.lista = 'nomina' AND p.estado = 'guardado'"
+        " GROUP BY n.participante_id"))
     salida = []
     for f in DB.execute("SELECT * FROM participantes ORDER BY nombre COLLATE NOCASE"):
         d = dict(f)
         d["deuda"] = max(0, deudas.get(d["id"], 0))
+        d["partidos"] = partidos_jugador.get(d["id"], 0)
         salida.append(d)
     return salida
 
