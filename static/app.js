@@ -357,7 +357,7 @@ function tarjetaMulta(m, dir) {
       ${m.estado === "pendiente" ? `
         <button class="btn claro chico" data-abonar="${m.id}">Abonar</button>
         <button class="btn verde chico" data-pagar="${m.id}">Pagar</button>` : ""}
-      <button class="btn claro chico" data-editar-multa="${m.id}">✏️ Editar</button>
+      <button class="icono" data-editar-multa="${m.id}" title="Editar multa">✏️</button>
       <button class="icono" data-borrar-multa="${m.id}" title="Borrar">🗑</button>
     </div>` : "";
   return `

@@ -129,11 +129,19 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn.claro { background: #eef0f4; color: var(--texto); }
 .btn.chico { padding: 5px 10px; font-size: .74rem; }
 .btn.ancho { width: 100%; margin-top: 10px; }
-.btn.morado:hover { background: #198754; color: #fff; }
-.btn.warning { background: #ffc107; color: #1f2937; }
+.btn.morado:hover,
 .btn.rojo:hover,
+.btn.warning:hover,
+.btn.gris:hover,
+.btn[data-usar-partido]:hover,
+.btn[data-abonar]:hover,
+.btn[data-reintegrar]:hover,
 #btn-ver-historial:hover { background: #198754; color: #fff; }
+.btn[data-pagar]:hover { background: #0dcaf0; color: #fff; }
+.btn.warning { background: #ffc107; color: #1f2937; }
+.btn.gris { background: #6b7280; color: #fff; }
 .btn:hover { filter: brightness(1.08); }
+[title^="Borrar"], [title="Quitar"] { color: var(--rojo); }
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .paginacion { justify-content: center; align-items: center; font-size: .78rem; }
 .fila.resaltado { animation: resaltarFila 2s ease; }

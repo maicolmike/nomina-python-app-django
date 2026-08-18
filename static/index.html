@@ -44,8 +44,8 @@
         <div><b>🏟 Cancha:</b> <span id="d-cancha"></span></div>
       </div>
       <div class="acciones solo-directiva">
-        <button id="btn-editar-partido" class="btn claro">✏️ Editar partido</button>
-        <button id="btn-nuevo-partido" class="btn claro">➕ Nuevo partido</button>
+        <button id="btn-editar-partido" class="btn warning">✏️ Editar partido</button>
+        <button id="btn-nuevo-partido" class="btn morado">➕ Nuevo partido</button>
       </div>
       <div id="form-partido" class="oculto rejilla">
         <label>Fecha <input id="p-fecha" type="date"></label>
@@ -78,7 +78,7 @@
 
     <div class="tarjeta solo-directiva">
       <div class="acciones">
-        <button id="btn-cambiar-cupos" class="btn claro oculto">✏️ Modificar cupos</button>
+        <button id="btn-cambiar-cupos" class="btn morado oculto">✏️ Modificar cupos</button>
       </div>
       <div id="form-cupos" class="rejilla oculto" style="margin-top:10px;">
         <label>Mujeres <input id="cupos-mujeres" type="number" min="0" value="6"></label>
@@ -135,7 +135,7 @@
 
     <div class="tarjeta solo-directiva">
       <h3 class="titulo-tarjeta">💬 TEXTO PARA WHATSAPP
-        <button id="btn-copiar" class="btn claro chico">Copiar</button></h3>
+        <button id="btn-copiar" class="btn morado chico">Copiar</button></h3>
       <pre id="texto" class="texto"></pre>
     </div>
   </section>
@@ -176,7 +176,7 @@
     <h2 class="titulo-seccion">📅 PARTIDOS VIGENTES <small id="c-partidos"></small></h2>
     <div id="lista-partidos" class="lista-tarjetas"></div>
     <h2 class="titulo-seccion solo-directiva">🗂 HISTORIAL DE PARTIDOS
-      <button id="btn-ver-historial" class="btn claro chico">Ver</button></h2>
+      <button id="btn-ver-historial" class="btn gris chico">Ver</button></h2>
     <div id="card-historial" class="tarjeta solo-directiva oculto">
       <div id="historial-partidos"></div>
     </div>
@@ -211,7 +211,7 @@
       </div>
       <div class="acciones ancho">
         <button id="btn-guardar-multa" class="btn morado">Registrar multa</button>
-        <button id="btn-nuevo-motivo" class="btn claro">➕ Agregar motivo</button>
+        <button id="btn-nuevo-motivo" class="btn warning">➕ Agregar motivo</button>
         <button id="btn-cancelar-editar-multa" class="btn claro oculto">Cancelar</button>
       </div>
       <p class="hint">Para registrar una multa se necesita: el jugador, el motivo y la fecha de la multa.</p>
@@ -223,7 +223,7 @@
         <label>Valor ($) <input id="m-motivo-nuevo-valor" type="number" min="0" step="500"></label>
         <div class="acciones ancho">
           <button id="btn-guardar-motivo" class="btn morado">Guardar motivo</button>
-          <button id="btn-cancelar-editar-motivo" class="btn claro">Cancelar</button>
+          <button id="btn-cancelar-editar-motivo" class="btn rojo">Cancelar</button>
         </div>
       </div>
       <div id="lista-motivos"></div>
