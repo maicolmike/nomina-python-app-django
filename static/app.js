@@ -406,7 +406,6 @@ function pintarJugadores() {
   const pagina = estado.jugadores.slice(desde, desde + JUGADORES_POR_PAGINA);
   $("lista-jugadores").innerHTML = (estado.jugadores.length
       ? '<div class="encabezado-fila"><span class="nombre">Nombre y apellido</span>'
-        + '<span class="estado">Estado</span>'
         + '<span class="partidos" title="Partidos jugados en el historial">N° partidos</span>'
         + (dir ? '<span class="acciones">Acciones</span>' : "") + '</div>'
       : "")
@@ -418,8 +417,10 @@ function pintarJugadores() {
         + (j.deuda ? `<span class="etq naranja">debe ${pesos(j.deuda)}</span>` : "");
       return `
     <div class="fila" data-jugador="${j.id}">
-      <span class="nombre">${emoji(j.genero)} ${esc(j.nombre)}</span>
-      <span class="estado">${estado || '<span class="etq verde">al día</span>'}</span>
+      <span class="nombre">
+        <span>${emoji(j.genero)} ${esc(j.nombre)}</span>
+        ${estado ? `<span class="estado">${estado}</span>` : ""}
+      </span>
       <span class="partidos" title="Partidos jugados en el historial">${j.partidos || 0}</span>
       ${dir ? `
       <span class="acciones">
