@@ -241,8 +241,16 @@ function pintarPartidos() {
 // de 5 en 5 con paginación. Cada entrada tiene "Ver nómina" y "Re abrir nómina".
 const HISTORIAL_POR_PAGINA = 5;
 let historialPagina = 1;
+let historialBusqueda = "";
+let historialTemporizador = null;
 function pintarHistorial() {
-  const h = estado.historial || [];
+  const base = estado.historial || [];
+  // Filtro "tipo datatable": busca en fecha, hora, cancha y cantidad anotada.
+  const h = historialBusqueda
+    ? base.filter((p) => normalizar(
+        `${p.fecha_es} ${p.hora_es} ${p.cancha} ${p.en_nomina} ${p.en_espera}`
+      ).includes(historialBusqueda))
+    : base;
   const totalPaginas = Math.max(1, Math.ceil(h.length / HISTORIAL_POR_PAGINA));
   historialPagina = Math.max(1, Math.min(historialPagina, totalPaginas));
   const desde = (historialPagina - 1) * HISTORIAL_POR_PAGINA;
@@ -931,6 +939,14 @@ $("btn-ver-historial").addEventListener("click", () => {
   card.classList.toggle("oculto");
   pintarHistorial();
   $("btn-ver-historial").textContent = card.classList.contains("oculto") ? "Ver" : "Ocultar";
+});
+$("h-buscar").addEventListener("input", () => {
+  clearTimeout(historialTemporizador);
+  historialTemporizador = setTimeout(() => {
+    historialPagina = 1;
+    historialBusqueda = normalizar($("h-buscar").value);
+    pintarHistorial();
+  }, 140);
 });
 $("btn-cancelar-cancha").addEventListener("click", () => {
   resetFormCancha();
