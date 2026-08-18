@@ -109,6 +109,7 @@ function pintar() {
   });
   $("card-motivos-personalizados").classList.add("oculto");
   $("card-cancha-nueva").classList.add("oculto");
+  if (!dir) $("card-historial").classList.add("oculto");
   $("btn-login").classList.toggle("oculto", dir || !estado.requiere_pin);
   $("btn-logout").classList.toggle("oculto", !dir || !estado.requiere_pin);
 
@@ -124,7 +125,6 @@ function pintar() {
   pintarCanchas();
   pintarMultas();
   pintarJugadores();
-  pintarPanel();
   pintarConfig();
 
   $("texto").textContent = estado.texto;
@@ -209,6 +209,7 @@ function pintarPartidos() {
           ${String(p.id) === String(vistaId) && String(p.id) !== String(activoId)
             ? '<span class="etq morada">viendo</span>' : ""}
           ${dir ? `
+            <button class="btn claro chico" data-guardar-partido="${p.id}" title="Archiva el partido en el historial">💾 Guardar</button>
             <button class="btn claro chico" data-usar-partido="${p.id}">Usar</button>
             <button class="icono" data-editar-partido="${p.id}" title="Editar">✏️</button>
             <button class="icono" data-borrar-partido="${p.id}" title="Borrar">🗑</button>`
@@ -216,6 +217,21 @@ function pintarPartidos() {
         </div>
       </div>
     </div>`).join("");
+
+  pintarHistorial();
+}
+
+// pintarHistorial() -> dibuja el historial de partidos guardados (los que la
+// directiva archivó con "Guardar"), con un botón para ver su nómina.
+function pintarHistorial() {
+  const h = estado.historial || [];
+  $("historial-partidos").innerHTML = h.length ? h.map((p) => `
+    <div class="fila">
+      <span class="nombre"><b>${esc(p.fecha_es)} · ${esc(p.hora_es)}</b>
+        <span class="detalle">${esc(p.cancha)} · ${p.en_nomina} en nómina · ${p.en_espera} en espera</span></span>
+      <button class="btn claro chico" data-ver-partido="${p.id}">Ver nómina</button>
+    </div>`).join("")
+    : '<p class="vacio">Aún no hay partidos en el historial. Guarda un partido desde la lista de arriba para archivarlo aquí.</p>';
 }
 
 // pintarCanchas() -> dibuja la lista de canchas guardadas (con botones para
@@ -354,61 +370,6 @@ function pintarJugadores() {
           title="${j.expulsado ? "Readmitir" : "Expulsar por multas"}">${j.expulsado ? "🔓" : "🔒"}</button>
 <button class="icono" data-borrar-jugador="${j.id}" title="Borrar">🗑</button>` : ""}
       </div>`).join("");
-}
-
-// pintarPanel() -> dibuja el tablero de la dirección (solo directiva): totatales,
-// nómina del partido en uso/vista, historial de partidos y deudas por jugador.
-function pintarPanel() {
-  const j = estado.jugadores || [];
-  const activos = j.filter((x) => x.activo);
-  $("ad-total").textContent = j.length;
-  $("ad-mujeres").textContent = activos.filter((x) => x.genero === "F").length;
-  $("ad-hombres").textContent = activos.filter((x) => x.genero === "M").length;
-  $("ad-expulsados").textContent = j.filter((x) => x.expulsado).length;
-  const deudores = j.filter((x) => x.deuda).sort((a, b) => b.deuda - a.deuda);
-  $("ad-deudores").textContent = deudores.length;
-  $("ad-deuda").textContent = pesos(estado.resumen_multas.deuda);
-  $("ad-vencidas").textContent = estado.resumen_multas.vencidas;
-
-  const p = estado.partido;
-  if (p) {
-    const lista = [["Nómina", estado.nomina], ["Espera", estado.espera]];
-    $("ad-nomina").innerHTML = `
-      <div class="fila"><span class="nombre"><b>${esc(p.fecha_es)} · ${esc(p.hora_es)}</b> · ${esc(p.cancha)}
-        <span class="etq ${p.activo ? "verde" : "morada"}">${p.activo ? "en uso" : "viendo"}</span></span></div>`
-      + lista.map(([titulo, items]) => `
-      <p class="detalle"><b>${titulo} (${items.length}):</b> ${
-        items.map((i) => `${emoji(i.genero)} ${esc(i.nombre)}`).join(" · ") || "—"}</p>`).join("");
-  } else {
-    $("ad-nomina").innerHTML = '<p class="vacio">Abre un partido en la pestaña Partidos para ver aquí su nómina.</p>';
-  }
-
-  const cupos = estado.cupos;
-  const maxima = cupos.mujeres + cupos.hombres;
-  $("ad-partidos").innerHTML = estado.partidos.length ? estado.partidos.map((x) => `
-    <div class="fila">
-      <span class="nombre">${esc(x.fecha_es)} · ${esc(x.hora_es)}
-        <span class="detalle">${esc(x.cancha)} · ${x.en_nomina} en nómina · ${x.en_espera} en espera ·
-          ${x.en_nomina >= maxima
-            ? '<span class="etq naranja">nómina llena</span>'
-            : `<span class="etq gris">faltan ${maxima - x.en_nomina}</span>`}</span></span>
-      <button class="btn claro chico" data-ver-partido="${x.id}">Ver nómina</button>
-    </div>`).join("") : '<p class="vacio">Aún no hay partidos guardados.</p>';
-
-  const orden = [...j].sort((a, b) => (b.deuda || 0) - (a.deuda || 0));
-  $("ad-jugadores").innerHTML = orden.map((x) => `
-    <div class="fila">
-      <span class="nombre">${emoji(x.genero)} ${esc(x.nombre)}
-        ${x.activo ? "" : '<span class="etq gris">inactivo</span>'}
-        ${x.expulsado ? '<span class="etq roja">expulsado</span>' : ""}
-        ${x.miembro ? "" : '<span class="etq gris">invitad@</span>'}</span>
-      <span class="${x.deuda ? "naranja" : ""}">${x.deuda ? pesos(x.deuda) : "al día"}</span>
-    </div>`).join("");
-}
-
-function horaCortePasada() {
-  const ahora = new Date();
-  return ahora.getHours() > 9 || (ahora.getHours() === 9 && ahora.getMinutes() >= 0);
 }
 
 // pintarConfig() -> rellena los campos del formulario de configuración con
@@ -665,6 +626,10 @@ document.addEventListener("click", async (e) => {
     } else if (d.borrarPartido) {
       if (!confirm("¿Borrar este partido y su nómina?")) return;
       await api(`/api/partidos/${d.borrarPartido}`, { method: "DELETE" });
+    } else if (d.guardarPartido) {
+      if (!confirm("¿Guardar este partido en el historial? Ya no aparecerá en la lista de partidos.")) return;
+      await api(`/api/partidos/${d.guardarPartido}/guardar`, { method: "POST", body: {} });
+      $("card-historial").classList.remove("oculto");
     } else if (d.verPartido) {
       partidoEnVista = d.verPartido;
       await cargar(partidoEnVista);
@@ -805,6 +770,10 @@ function abrirFormCancha() {
   $("c-cancha-nueva").focus();
 }
 $("btn-nuevo-cancha").addEventListener("click", abrirFormCancha);
+$("btn-historial").addEventListener("click", () => {
+  $("card-historial").classList.toggle("oculto");
+  pintarHistorial();
+});
 $("btn-cancelar-cancha").addEventListener("click", () => {
   resetFormCancha();
   $("card-cancha-nueva").classList.add("oculto");

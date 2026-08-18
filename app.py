@@ -665,7 +665,8 @@ def partido_actual():
     fila = DB.execute("SELECT * FROM partidos WHERE activo = 1 LIMIT 1").fetchone()
     if not fila:
         fila = DB.execute(
-            "SELECT * FROM partidos WHERE estado != 'cancelada' ORDER BY fecha ASC, id ASC LIMIT 1"
+            "SELECT * FROM partidos WHERE estado NOT IN ('cancelada','guardado')"
+            " ORDER BY fecha ASC, id ASC LIMIT 1"
         ).fetchone()
         if fila:
             DB.execute("UPDATE partidos SET activo = 0 WHERE activo = 1")
@@ -746,8 +747,12 @@ def motivos_multa_lista():
 
 # partidos_lista() -> los partidos guardados con cuánta gente tienen anotada.
 def partidos_lista():
+    """Los partidos 'en curso' (los que no están en el historial ni cancelados).
+    Guardar un partido lo saca de aquí y lo lleva al historial."""
     salida = []
-    for f in DB.execute("SELECT * FROM partidos ORDER BY fecha ASC, id ASC LIMIT 60"):
+    for f in DB.execute("SELECT * FROM partidos"
+                        " WHERE estado NOT IN ('guardado','cancelada')"
+                        " ORDER BY fecha ASC, id ASC LIMIT 60"):
         d = dict(f)
         d["fecha_es"] = fecha_es(d["fecha"])
         d["hora_es"] = hora_es(d["hora"])
@@ -759,6 +764,45 @@ def partidos_lista():
         d["en_espera"] = conteos.get("espera", 0)
         salida.append(d)
     return salida
+
+
+def partidos_historial():
+    """Los partidos guardados (historial), con su fecha, cancha y cuánta gente
+    tenía anotada. El más reciente primero."""
+    salida = []
+    for f in DB.execute("SELECT * FROM partidos WHERE estado = 'guardado'"
+                        " ORDER BY fecha DESC, id DESC LIMIT 60"):
+        d = dict(f)
+        d["fecha_es"] = fecha_es(d["fecha"])
+        d["hora_es"] = hora_es(d["hora"])
+        cuenta = DB.execute(
+            "SELECT lista, COUNT(*) n FROM nomina WHERE partido_id = ? GROUP BY lista", (d["id"],)
+        ).fetchall()
+        conteos = {r["lista"]: r["n"] for r in cuenta}
+        d["en_nomina"] = conteos.get("nomina", 0)
+        d["en_espera"] = conteos.get("espera", 0)
+        salida.append(d)
+    return salida
+
+
+def guardar_partido(ident):
+    """Pasa un partido al historial (estado 'guardado'). Si era el partido en
+    uso, deja otro partido 'en curso' como activo. El guardado ya no aparece en
+    la lista de partidos, solo en el historial."""
+    fila = DB.execute("SELECT * FROM partidos WHERE id = ?", (ident,)).fetchone()
+    if not fila:
+        raise ErrorApp("El partido no existe", 404)
+    era_activo = fila["activo"]
+    DB.execute("UPDATE partidos SET estado = 'guardado', activo = 0 WHERE id = ?", (ident,))
+    if era_activo:
+        resto = DB.execute(
+            "SELECT id FROM partidos WHERE estado NOT IN ('cancelada','guardado')"
+            " ORDER BY fecha DESC, id DESC LIMIT 1"
+        ).fetchone()
+        if resto:
+            DB.execute("UPDATE partidos SET activo = 1 WHERE id = ?", (resto["id"],))
+    DB.commit()
+    return {"ok": True}
 
 
 # estado_completo(rol, partido_id) -> TODO lo que necesita la interfaz para
@@ -810,6 +854,7 @@ def estado_completo(rol, partido_id=None):
         "partido": partido,
         "partido_vista_id": partido["id"] if partido else None,
         "partido_activo_id": activo["id"] if activo else None,
+        "historial": partidos_historial(),
         "corte_invitados": corte_info,
         "nomina": nomina,
         "espera": espera,
@@ -1392,7 +1437,7 @@ class Handler(BaseHTTPRequestHandler):
             # Solo se pone "en uso" automáticamente si no hay otro partido con
             # fecha anterior: el más antiguo es el próximo a jugarse.
             mas_antiguo = DB.execute(
-                "SELECT id FROM partidos WHERE estado != 'cancelada'"
+                "SELECT id FROM partidos WHERE estado NOT IN ('cancelada','guardado')"
                 " ORDER BY fecha ASC, id ASC LIMIT 1"
             ).fetchone()
             if mas_antiguo and mas_antiguo["id"] == pid:
@@ -1566,7 +1611,7 @@ def enrutar_item(self, recurso, ident, accion, datos):
                 DB.execute("DELETE FROM partidos WHERE id = ?", (ident,))
                 if era_activo and era_activo["activo"]:
                     resto = DB.execute(
-                        "SELECT id FROM partidos WHERE estado != 'cancelada'"
+                        "SELECT id FROM partidos WHERE estado NOT IN ('cancelada','guardado')"
                         " ORDER BY fecha DESC, id DESC LIMIT 1"
                     ).fetchone()
                     if resto:

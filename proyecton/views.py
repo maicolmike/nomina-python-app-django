@@ -165,7 +165,7 @@ def api_post(request, recurso):
             raise servidor.ErrorApp("Selecciona la hora del partido")
         pid = servidor.crear_partido(fecha, hora, cancha)
         mas_antiguo = servidor.DB.execute(
-            "SELECT id FROM partidos WHERE estado != 'cancelada'"
+            "SELECT id FROM partidos WHERE estado NOT IN ('cancelada','guardado')"
             " ORDER BY fecha ASC, id ASC LIMIT 1"
         ).fetchone()
         if mas_antiguo and mas_antiguo["id"] == pid:
@@ -351,11 +351,13 @@ def api_item(request, recurso, ident, accion=None):
             servidor.DB.execute("DELETE FROM partidos WHERE id = ?", (id_,))
             if era_activo and era_activo["activo"]:
                 resto = servidor.DB.execute(
-                    "SELECT id FROM partidos WHERE estado != 'cancelada'"
+                    "SELECT id FROM partidos WHERE estado NOT IN ('cancelada','guardado')"
                     " ORDER BY fecha DESC, id DESC LIMIT 1").fetchone()
                 if resto:
                     servidor.DB.execute("UPDATE partidos SET activo = 0 WHERE activo = 1")
                     servidor.DB.execute("UPDATE partidos SET activo = 1 WHERE id = ?", (resto["id"],))
+        elif accion == "guardar":
+            return _responder(servidor.guardar_partido(id_))
         elif accion == "usar":
             servidor.DB.execute("UPDATE partidos SET activo = 0 WHERE activo = 1")
             servidor.DB.execute("UPDATE partidos SET activo = 1 WHERE id = ?", (id_,))
