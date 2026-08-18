@@ -134,6 +134,7 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn.warning:hover,
 .btn.gris:hover,
 .btn[data-usar-partido]:hover,
+.btn[data-ver-partido]:hover,
 .btn[data-abonar]:hover,
 .btn[data-reintegrar]:hover,
 #btn-ver-historial:hover { background: #198754; color: #fff; }
