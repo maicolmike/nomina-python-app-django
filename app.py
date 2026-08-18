@@ -1439,7 +1439,8 @@ def enrutar_item(self, recurso, ident, accion, datos):
                         partido = DB.execute(
                             "SELECT * FROM partidos WHERE id = ?", (fila["partido_id"],)
                         ).fetchone()
-                        if partido and not permite_invitados(dict(partido)):
+                        if partido and not permite_invitados(dict(partido)) \
+                                and not datos.get("forzar"):
                             raise ErrorApp(
                                 "El corte de invitados aún no pasa: solo entran a la nómina "
                                 "después de las 9am del día del partido")

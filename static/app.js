@@ -610,6 +610,37 @@ async function anotar(forzar = false) {
 }
 $("btn-anotar").addEventListener("click", () => anotar());
 
+// confirmarAgregarInvitado() -> muestra el modal de confirmación para meter a un
+// invitado a la nómina antes del corte. Devuelve true si eligen "Agregar".
+function confirmarAgregarInvitado() {
+  return new Promise((resolver) => {
+    const modal = $("modal-invitado");
+    modal.classList.remove("oculto");
+    const terminar = (ok) => {
+      modal.classList.add("oculto");
+      resolver(ok);
+    };
+    $("btn-agregar-invitado").onclick = () => terminar(true);
+    $("btn-cancelar-invitado").onclick = () => terminar(false);
+  });
+}
+
+// moverEnNomina(id, lista) -> mueve a alguien de nómina a espera o viceversa.
+// Si es un invitado y el corte aún no pasó, primero pregunta a la directiva
+// (modal "Agregar"/"Cancelar"); solo con "Agregar" se mete a la nómina.
+async function moverEnNomina(id, lista) {
+  try {
+    await api(`/api/nomina/${id}/mover`, { method: "POST", body: { lista } });
+  } catch (err) {
+    if (lista === "nomina" && /corte de invitados/i.test(err.message)) {
+      if (!(await confirmarAgregarInvitado())) return;
+      await api(`/api/nomina/${id}/mover`, { method: "POST", body: { lista, forzar: true } });
+      return;
+    }
+    throw err;
+  }
+}
+
 // -------------------------------------------------------- acciones varias
 document.addEventListener("click", async (e) => {
   const b = e.target.closest("button");
@@ -620,7 +651,7 @@ document.addEventListener("click", async (e) => {
       const r = await api(`/api/nomina/${d.quitar}`, { method: "DELETE" });
       aviso(r.mensaje);
     } else if (d.mover) {
-      await api(`/api/nomina/${d.mover}/mover`, { method: "POST", body: { lista: d.lista } });
+      await moverEnNomina(d.mover, d.lista);
     } else if (d.borrarPartido) {
       if (!confirm("¿Borrar este partido y su nómina?")) return;
       await api(`/api/partidos/${d.borrarPartido}`, { method: "DELETE" });

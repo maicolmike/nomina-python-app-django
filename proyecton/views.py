@@ -237,7 +237,8 @@ def api_item(request, recurso, ident, accion=None):
                     partido = servidor.DB.execute(
                         "SELECT * FROM partidos WHERE id = ?", (fila["partido_id"],)
                     ).fetchone()
-                    if partido and not servidor.permite_invitados(dict(partido)):
+                    if partido and not servidor.permite_invitados(dict(partido)) \
+                            and not datos.get("forzar"):
                         raise servidor.ErrorApp(
                             "El corte de invitados aún no pasa: solo entran a la nómina "
                             "después de las 9am del día del partido")
