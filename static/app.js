@@ -761,6 +761,7 @@ document.addEventListener("click", async (e) => {
       $("btn-cancelar-editar-partido").classList.remove("oculto");
       $("hint-partido-form").textContent = "Estás editando el partido guardado. Guarda los cambios o cancela.";
       document.querySelector('.tabs button[data-tab="partidos"]').click();
+      mostrarFormPartido();
       return;
     } else if (d.pagar) {
       await api(`/api/multas/${d.pagar}/pagar`, { method: "POST" });
@@ -846,21 +847,36 @@ $("btn-guardar-partido").addEventListener("click", async () => {
 $("btn-nuevo-partido").addEventListener("click", () => {
   cancelarEdicionPartido();
   document.querySelector('.tabs button[data-tab="partidos"]').click();
-  $("n-fecha").focus();
+  mostrarFormPartido();
 });
 
+// mostrarFormPartido() -> despliega la tarjeta de crear/editar partido.
+function mostrarFormPartido() {
+  $("card-crear-partido").classList.remove("oculto");
+  $("n-fecha").focus();
+}
+
 // cancelarEdicionPartido() -> deja los campos de crear/editar partido en blanco
-// y restaura el botón a "Crear partido".
+// y restaura el botón a "Guardar".
 function cancelarEdicionPartido() {
   editandoPartidoId = null;
   $("n-fecha").value = "";
   $("n-hora").value = "";
   $("n-cancha").value = "";
-  $("btn-crear-partido").textContent = "➕ Crear partido";
+  $("btn-crear-partido").textContent = "Guardar";
   $("btn-cancelar-editar-partido").classList.add("oculto");
   $("hint-partido-form").textContent = "La fecha, la hora y la cancha son obligatorias para crear el partido.";
 }
 $("btn-cancelar-editar-partido").addEventListener("click", cancelarEdicionPartido);
+$("btn-nuevo-partido-top").addEventListener("click", () => {
+  const card = $("card-crear-partido");
+  if (card.classList.contains("oculto")) {
+    cancelarEdicionPartido();
+    mostrarFormPartido();
+  } else {
+    card.classList.add("oculto");
+  }
+});
 
 // ---------------------------------------------------------- cancha nueva
 let editandoCanchaId = null;

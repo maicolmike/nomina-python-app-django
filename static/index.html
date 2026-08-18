@@ -141,7 +141,10 @@
 
   <!-- ========================================================== PARTIDOS -->
   <section id="tab-partidos" class="tab">
-    <div class="tarjeta solo-directiva rejilla">
+    <div class="tarjeta solo-directiva">
+      <button id="btn-nuevo-partido-top" class="btn morado ancho">➕ Crear partido</button>
+    </div>
+    <div id="card-crear-partido" class="tarjeta solo-directiva rejilla oculto">
       <label>Fecha <input id="n-fecha" type="date" required></label>
       <label>Hora <input id="n-hora" type="time" required></label>
       <label class="ancho">Cancha
@@ -151,7 +154,7 @@
         </div>
       </label>
       <div class="acciones ancho">
-        <button id="btn-crear-partido" class="btn morado">➕ Crear partido</button>
+        <button id="btn-crear-partido" class="btn morado">Guardar</button>
         <button id="btn-nuevo-cancha" class="btn claro">➕ Agregar cancha</button>
         <button id="btn-cancelar-editar-partido" class="btn claro oculto">Cancelar edición</button>
       </div>
