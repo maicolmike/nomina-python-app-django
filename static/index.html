@@ -253,6 +253,53 @@
     </div>
   </section>
 
+  <!-- ============================================================ PANEL -->
+  <section id="tab-panel" class="tab solo-directiva oculto">
+    <h2 class="titulo-seccion">📊 PANEL DIRECCIÓN</h2>
+    <div class="contadores">
+      <div class="tarjeta contador">
+        <span class="etiqueta">JUGADORES DEL GRUPO</span>
+        <b id="ad-total">0</b>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">MUJERES ACTIVAS</span>
+        <b id="ad-mujeres">0</b>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">HOMBRES ACTIVOS</span>
+        <b id="ad-hombres">0</b>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">EXPULSADOS</span>
+        <b id="ad-expulsados" class="rojo-texto">0</b>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">CON DEUDA</span>
+        <b id="ad-deudores" class="rojo-texto">0</b>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">DEUDA TOTAL</span>
+        <b id="ad-deuda" class="naranja">$0</b>
+      </div>
+      <div class="tarjeta contador">
+        <span class="etiqueta">MULTAS VENCIDAS</span>
+        <b id="ad-vencidas" class="rojo-texto">0</b>
+      </div>
+    </div>
+    <div class="tarjeta">
+      <h3 class="titulo-tarjeta">📋 NÓMINA DEL PARTIDO</h3>
+      <div id="ad-nomina"></div>
+    </div>
+    <div class="tarjeta">
+      <h3 class="titulo-tarjeta">📅 HISTORIAL DE PARTIDOS</h3>
+      <div id="ad-partidos"></div>
+    </div>
+    <div class="tarjeta">
+      <h3 class="titulo-tarjeta">👥 JUGADORES Y DEUDAS</h3>
+      <div id="ad-jugadores"></div>
+    </div>
+  </section>
+
   <!-- ========================================================== REGLAMENTO -->
   <section id="tab-reglamento" class="tab oculto">
     <h2 class="titulo-seccion">📋 REGLAMENTO</h2>
@@ -274,6 +321,7 @@
   <button data-tab="multas"><span>💸</span>Multas</button>
   <button data-tab="jugadores"><span>👥</span>Jugadores</button>
   <button data-tab="reglamento"><span>📖</span>Reglamento</button>
+  <button data-tab="panel" class="solo-directiva"><span>📊</span>Panel</button>
   <button data-tab="config" class="solo-directiva"><span>⚙️</span>Config</button>
 </nav>
 

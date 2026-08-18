@@ -114,6 +114,7 @@ function pintar() {
   pintarCanchas();
   pintarMultas();
   pintarJugadores();
+  pintarPanel();
   pintarConfig();
 
   $("texto").textContent = estado.texto;
@@ -311,7 +312,57 @@ function pintarJugadores() {
           title="${j.activo ? "Inactivar" : "Activar"}">${j.activo ? "🚫" : "✔️"}</button>
         <button class="icono" data-expulsado="${j.id}" data-valor="${j.expulsado ? 0 : 1}"
           title="${j.expulsado ? "Readmitir" : "Expulsar por multas"}">${j.expulsado ? "🔓" : "🔒"}</button>
-        <button class="icono" data-borrar-jugador="${j.id}" title="Borrar">🗑</button>` : ""}
+<button class="icono" data-borrar-jugador="${j.id}" title="Borrar">🗑</button>` : ""}
+      </div>`).join("");
+}
+
+// pintarPanel() -> dibuja el tablero de la dirección (solo directiva): totatales,
+// nómina del partido en uso/vista, historial de partidos y deudas por jugador.
+function pintarPanel() {
+  const j = estado.jugadores || [];
+  const activos = j.filter((x) => x.activo);
+  $("ad-total").textContent = j.length;
+  $("ad-mujeres").textContent = activos.filter((x) => x.genero === "F").length;
+  $("ad-hombres").textContent = activos.filter((x) => x.genero === "M").length;
+  $("ad-expulsados").textContent = j.filter((x) => x.expulsado).length;
+  const deudores = j.filter((x) => x.deuda).sort((a, b) => b.deuda - a.deuda);
+  $("ad-deudores").textContent = deudores.length;
+  $("ad-deuda").textContent = pesos(estado.resumen_multas.deuda);
+  $("ad-vencidas").textContent = estado.resumen_multas.vencidas;
+
+  const p = estado.partido;
+  if (p) {
+    const lista = [["Nómina", estado.nomina], ["Espera", estado.espera]];
+    $("ad-nomina").innerHTML = `
+      <div class="fila"><span class="nombre"><b>${esc(p.fecha_es)} · ${esc(p.hora_es)}</b> · ${esc(p.cancha)}
+        <span class="etq ${p.activo ? "verde" : "morada"}">${p.activo ? "en uso" : "viendo"}</span></span></div>`
+      + lista.map(([titulo, items]) => `
+      <p class="detalle"><b>${titulo} (${items.length}):</b> ${
+        items.map((i) => `${emoji(i.genero)} ${esc(i.nombre)}`).join(" · ") || "—"}</p>`).join("");
+  } else {
+    $("ad-nomina").innerHTML = '<p class="vacio">Abre un partido en la pestaña Partidos para ver aquí su nómina.</p>';
+  }
+
+  const cupos = estado.cupos;
+  const maxima = cupos.mujeres + cupos.hombres;
+  $("ad-partidos").innerHTML = estado.partidos.length ? estado.partidos.map((x) => `
+    <div class="fila">
+      <span class="nombre">${esc(x.fecha_es)} · ${esc(x.hora_es)}
+        <span class="detalle">${esc(x.cancha)} · ${x.en_nomina} en nómina · ${x.en_espera} en espera ·
+          ${x.en_nomina >= maxima
+            ? '<span class="etq naranja">nómina llena</span>'
+            : `<span class="etq gris">faltan ${maxima - x.en_nomina}</span>`}</span></span>
+      <button class="btn claro chico" data-ver-partido="${x.id}">Ver nómina</button>
+    </div>`).join("") : '<p class="vacio">Aún no hay partidos guardados.</p>';
+
+  const orden = [...j].sort((a, b) => (b.deuda || 0) - (a.deuda || 0));
+  $("ad-jugadores").innerHTML = orden.map((x) => `
+    <div class="fila">
+      <span class="nombre">${emoji(x.genero)} ${esc(x.nombre)}
+        ${x.activo ? "" : '<span class="etq gris">inactivo</span>'}
+        ${x.expulsado ? '<span class="etq roja">expulsado</span>' : ""}
+        ${x.miembro ? "" : '<span class="etq gris">invitad@</span>'}</span>
+      <span class="${x.deuda ? "naranja" : ""}">${x.deuda ? pesos(x.deuda) : "al día"}</span>
     </div>`).join("");
 }
 
