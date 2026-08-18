@@ -94,6 +94,14 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
   letter-spacing: .3px;
 }
 .titulo-seccion small { color: var(--suave); font-weight: 400; }
+.encabezado-seccion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 8px;
+}
+.encabezado-seccion .titulo-seccion { margin: 0; }
 .titulo-tarjeta {
   font-size: .82rem;
   letter-spacing: .6px;

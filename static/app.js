@@ -344,11 +344,11 @@ function pintarMultas() {
   $("lista-multas").innerHTML = `
     <h2 class="titulo-seccion">📋 LISTADO DE MULTAS <small>(${activas.length})</small></h2>
     <div class="lista-tarjetas">${activas.length ? activas.map((m) => tarjetaMulta(m, dir)).join("") : '<div class="tarjeta"><p class="vacio">Sin multas registradas.</p></div>'}</div>
-    <div class="acciones">
-      <button class="btn gris chico" data-toggle-expulsados>🚫 Ver eliminados por no pagar <small>(${expulsados.length})</small></button>
+    <div class="encabezado-seccion">
+      <h2 class="titulo-seccion">🚫 ELIMINADOS POR NO PAGAR MULTAS <small>(${expulsados.length})</small></h2>
+      <button class="btn gris chico" data-toggle-expulsados>Ver</button>
     </div>
     <div id="lista-expulsados" class="oculto">
-      <h2 class="titulo-seccion">🚫 ELIMINADOS POR NO PAGAR MULTAS <small>(${expulsados.length})</small></h2>
       <div class="lista-tarjetas">${expulsados.length ? expulsados.map((m) => tarjetaMulta(m, dir)).join("") : '<div class="tarjeta"><p class="vacio">Sin eliminados por no pagar multas.</p></div>'}</div>
     </div>`;
 }
@@ -831,7 +831,7 @@ document.addEventListener("click", async (e) => {
       const lista = $("lista-expulsados");
       const mostrar = lista.classList.toggle("oculto");
       const btn = document.querySelector("[data-toggle-expulsados]");
-      if (btn) btn.innerHTML = `🚫 ${mostrar ? "Ver" : "Ocultar"} eliminados por no pagar <small>(${(estado.multas || []).filter((m) => m.expulsado).length})</small>`;
+      if (btn) btn.textContent = mostrar ? "Ver" : "Ocultar";
       return;
     } else if (d.abonar) {
       const monto = prompt("¿Cuánto abona?", "1000");
