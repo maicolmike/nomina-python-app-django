@@ -132,6 +132,11 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn:hover { filter: brightness(1.08); }
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .paginacion { justify-content: center; align-items: center; font-size: .78rem; }
+.fila.resaltado { animation: resaltarFila 2s ease; }
+@keyframes resaltarFila {
+  0% { background: rgba(234, 138, 4, .28); }
+  100% { background: transparent; }
+}
 .icono {
   background: none;
   border: 0;

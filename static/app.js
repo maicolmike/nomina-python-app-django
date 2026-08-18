@@ -380,7 +380,7 @@ function pintarJugadores() {
   const dir = estado.rol === "directiva";
   $("c-jugadores").textContent = `(${estado.jugadores.length})`;
   $("lista-jugadores").innerHTML = estado.jugadores.map((j) => `
-    <div class="fila">
+    <div class="fila" data-jugador="${j.id}">
       <span class="nombre">${emoji(j.genero)} ${esc(j.nombre)}
         ${j.activo ? "" : '<span class="etq gris">inactivo</span>'}
         ${j.expulsado ? '<span class="etq roja">expulsado</span>' : ""}
@@ -395,6 +395,74 @@ function pintarJugadores() {
 <button class="icono" data-borrar-jugador="${j.id}" title="Borrar">🗑</button>` : ""}
       </div>`).join("");
 }
+
+// ------------------------------------------------------- buscar jugador
+// Input autocompletable bajo "JUGADORES DEL GRUPO": sugiere jugadores de la
+// base y, al elegir uno, baja a su fila y la resalta en la lista.
+let jBuscarSugeridas = [];
+let jBuscarActivo = -1;
+let jBuscarTemporizador = null;
+
+function jBuscarSugerencias() {
+  const q = normalizar($("j-buscar").value);
+  const lista = estado.jugadores.filter((j) => j.activo);
+  if (!q) {
+    jBuscarSugeridas = [];
+  } else {
+    const empieza = lista.filter((j) => normalizar(j.nombre).startsWith(q));
+    const contiene = lista.filter((j) =>
+      normalizar(j.nombre).includes(q) && !empieza.includes(j));
+    jBuscarSugeridas = empieza.concat(contiene).slice(0, 10);
+  }
+  jBuscarActivo = -1;
+  pintarSugerenciasBuscarJugador();
+}
+
+function pintarSugerenciasBuscarJugador() {
+  const caja = $("j-buscar-sugerencias");
+  if (!jBuscarSugeridas.length) { caja.classList.add("oculto"); return; }
+  caja.innerHTML = jBuscarSugeridas.map((s, n) => `
+    <div data-n="${n}" class="${n === jBuscarActivo ? "activa" : ""}">
+      <span>${emoji(s.genero)} ${esc(s.nombre)}</span>
+      <span class="meta">${s.miembro ? "grupo" : "invitad@"}${s.deuda ? ` · debe ${pesos(s.deuda)}` : ""}</span>
+    </div>`).join("");
+  caja.classList.remove("oculto");
+}
+
+function elegirJugadorBuscar(s) {
+  $("j-buscar").value = s.nombre;
+  $("j-buscar-sugerencias").classList.add("oculto");
+  const fila = document.querySelector(`[data-jugador="${s.id}"]`);
+  if (fila) {
+    fila.scrollIntoView({ block: "center", behavior: "smooth" });
+    fila.classList.add("resaltado");
+    setTimeout(() => fila.classList.remove("resaltado"), 2000);
+  }
+}
+
+$("j-buscar").addEventListener("input", () => {
+  clearTimeout(jBuscarTemporizador);
+  jBuscarTemporizador = setTimeout(jBuscarSugerencias, 140);
+});
+$("j-buscar").addEventListener("keydown", (e) => {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    jBuscarActivo = Math.max(0, Math.min(jBuscarSugeridas.length - 1,
+      jBuscarActivo + (e.key === "ArrowDown" ? 1 : -1)));
+    pintarSugerenciasBuscarJugador();
+  } else if (e.key === "Enter") {
+    if (jBuscarActivo >= 0 && jBuscarSugeridas[jBuscarActivo]) {
+      e.preventDefault();
+      elegirJugadorBuscar(jBuscarSugeridas[jBuscarActivo]);
+    }
+  } else if (e.key === "Escape") {
+    $("j-buscar-sugerencias").classList.add("oculto");
+  }
+});
+$("j-buscar-sugerencias").addEventListener("click", (e) => {
+  const div = e.target.closest("div[data-n]");
+  if (div) elegirJugadorBuscar(jBuscarSugeridas[Number(div.dataset.n)]);
+});
 
 // pintarConfig() -> rellena los campos del formulario de configuración con
 // los valores actuales (si no estamos justo editando).
