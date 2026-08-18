@@ -767,8 +767,9 @@ def partidos_lista():
 
 
 def partidos_historial():
-    """Los partidos guardados (historial), con su fecha, cancha y cuánta gente
-    tenía anotada. De más antiguo a más reciente."""
+    """Los partidos guardados (historial), con su fecha, cancha, cuánta gente
+    tenía anotada y los nombres de los jugadores anotados. De más antiguo a más
+    reciente. Los nombres sirven para poder buscar por jugador en el historial."""
     salida = []
     for f in DB.execute("SELECT * FROM partidos WHERE estado = 'guardado'"
                         " ORDER BY fecha ASC, id ASC LIMIT 500"):
@@ -781,6 +782,13 @@ def partidos_historial():
         conteos = {r["lista"]: r["n"] for r in cuenta}
         d["en_nomina"] = conteos.get("nomina", 0)
         d["en_espera"] = conteos.get("espera", 0)
+        nombres = DB.execute(
+            "SELECT COALESCE(pt.nombre, n.nombre_libre) nombre"
+            " FROM nomina n LEFT JOIN participantes pt ON pt.id = n.participante_id"
+            " WHERE n.partido_id = ?",
+            (d["id"],),
+        ).fetchall()
+        d["jugadores"] = [r["nombre"] for r in nombres if r["nombre"]]
         salida.append(d)
     return salida
 

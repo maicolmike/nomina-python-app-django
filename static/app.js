@@ -248,7 +248,7 @@ function pintarHistorial() {
   // Filtro "tipo datatable": busca en fecha, hora, cancha y cantidad anotada.
   const h = historialBusqueda
     ? base.filter((p) => normalizar(
-        `${p.fecha_es} ${p.hora_es} ${p.cancha} ${p.en_nomina} ${p.en_espera}`
+        `${p.fecha_es} ${p.hora_es} ${p.cancha} ${p.en_nomina} ${p.en_espera} ${(p.jugadores || []).join(" ")}`
       ).includes(historialBusqueda))
     : base;
   const totalPaginas = Math.max(1, Math.ceil(h.length / HISTORIAL_POR_PAGINA));
