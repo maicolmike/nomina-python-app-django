@@ -114,6 +114,8 @@ function pintar() {
   $("btn-ver-historial").textContent = "Ver";
   // El formulario de partido solo aparece al pulsar "Crear partido".
   $("card-crear-partido").classList.add("oculto");
+  // El formulario de registro de multa solo aparece al pulsar "Registrar multa".
+  $("card-registrar-multa").classList.add("oculto");
   $("btn-login").classList.toggle("oculto", dir || !estado.requiere_pin);
   $("btn-logout").classList.toggle("oculto", !dir || !estado.requiere_pin);
 
@@ -996,7 +998,7 @@ function abrirEditarMulta(m) {
   $("m-fecha").value = m.fecha;
   $("m-plazo").value = m.plazo || "";
   $("btn-guardar-multa").textContent = "💾 Guardar cambios de la multa";
-  $("btn-cancelar-editar-multa").classList.remove("oculto");
+  $("card-registrar-multa").classList.remove("oculto");
   multaJugadorId = m.participante_id || null;
   $("m-jugador").value = m.nombre || "";
   window.scrollTo({ top: 0 });
@@ -1007,8 +1009,7 @@ function cerrarEditarMulta() {
   editandoMultaId = null;
   multaJugadorId = null;
   multaValorOriginal = null;
-  $("btn-guardar-multa").textContent = "Registrar multa";
-  $("btn-cancelar-editar-multa").classList.add("oculto");
+  $("btn-guardar-multa").textContent = "Guardar";
   $("m-motivo-comun").value = "";
 }
 
@@ -1120,9 +1121,19 @@ $("m-jugador-sugerencias").addEventListener("click", (e) => {
   const div = e.target.closest("div[data-n]");
   if (div) elegirJugadorMulta(multaJugadorSugeridas[Number(div.dataset.n)]);
 });
-$("btn-cancelar-editar-multa").addEventListener("click", () => {
+$("btn-cancelar-multa").addEventListener("click", () => {
   cerrarEditarMulta();
-  window.scrollTo({ top: document.body.scrollHeight });
+  $("card-registrar-multa").classList.add("oculto");
+});
+$("btn-nuevo-multa-top").addEventListener("click", () => {
+  const card = $("card-registrar-multa");
+  if (card.classList.contains("oculto")) {
+    cerrarEditarMulta();
+    $("card-registrar-multa").classList.remove("oculto");
+    $("m-jugador").focus();
+  } else {
+    card.classList.add("oculto");
+  }
 });
 $("btn-guardar-multa").addEventListener("click", async () => {
   const opMotivo = $("m-motivo-comun").selectedOptions[0];
