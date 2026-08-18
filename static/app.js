@@ -228,17 +228,34 @@ function pintarPartidos() {
 }
 
 // pintarHistorial() -> dibuja el historial de partidos guardados (los que la
-// directiva archivó con "Guardar"), con un botón para ver su nómina.
+// directiva archivó con "Guardar"), ordenado del más antiguo al más reciente,
+// de 5 en 5 con paginación. Cada entrada tiene "Ver nómina" y "Re abrir nómina".
+const HISTORIAL_POR_PAGINA = 5;
+let historialPagina = 1;
 function pintarHistorial() {
   const h = estado.historial || [];
-  $("historial-partidos").innerHTML = h.length ? h.map((p) => `
+  const totalPaginas = Math.max(1, Math.ceil(h.length / HISTORIAL_POR_PAGINA));
+  historialPagina = Math.max(1, Math.min(historialPagina, totalPaginas));
+  const desde = (historialPagina - 1) * HISTORIAL_POR_PAGINA;
+  const pagina = h.slice(desde, desde + HISTORIAL_POR_PAGINA);
+
+  const contenido = pagina.length ? pagina.map((p) => `
     <div class="fila">
       <span class="nombre"><b>${esc(p.fecha_es)} · ${esc(p.hora_es)}</b>
         <span class="detalle">${esc(p.cancha)} · ${p.en_nomina} en nómina · ${p.en_espera} en espera</span></span>
-      <button class="btn claro chico" data-abrir-nomina="${p.id}">Abrir nómina</button>
       <button class="btn claro chico" data-ver-partido="${p.id}">Ver nómina</button>
+      <button class="btn claro chico" data-abrir-nomina="${p.id}">Re abrir nómina</button>
     </div>`).join("")
     : '<p class="vacio">Aún no hay partidos en el historial. Guarda un partido desde la lista de arriba para archivarlo aquí.</p>';
+
+  const controles = h.length > HISTORIAL_POR_PAGINA ? `
+    <div class="acciones paginacion">
+      <button class="btn claro chico" data-hist-prev ${historialPagina <= 1 ? "disabled" : ""}>‹ Anterior</button>
+      <span>Página ${historialPagina} de ${totalPaginas}</span>
+      <button class="btn claro chico" data-hist-next ${historialPagina >= totalPaginas ? "disabled" : ""}>Siguiente ›</button>
+    </div>` : "";
+
+  $("historial-partidos").innerHTML = contenido + controles;
 }
 
 // pintarCanchas() -> dibuja la lista de canchas guardadas (con botones para
@@ -639,11 +656,19 @@ document.addEventListener("click", async (e) => {
       $("card-historial").classList.remove("oculto");
       $("btn-ver-historial").textContent = "Ocultar";
     } else if (d.abrirNomina) {
-      if (!confirm("¿Abrir la nómina de este partido? Volverá a la lista de partidos y se podrá editar.")) return;
+      if (!confirm("¿Re abrir la nómina de este partido? Volverá a la lista de partidos y se podrá editar.")) return;
       await api(`/api/partidos/${d.abrirNomina}/abrir`, { method: "POST", body: {} });
       partidoEnVista = d.abrirNomina;
       await cargar(partidoEnVista);
       document.querySelector('.tabs button[data-tab="nomina"]').click();
+      return;
+    } else if (d.histPrev) {
+      historialPagina = Math.max(1, historialPagina - 1);
+      pintarHistorial();
+      return;
+    } else if (d.histNext) {
+      historialPagina++;
+      pintarHistorial();
       return;
     } else if (d.verPartido) {
       partidoEnVista = d.verPartido;

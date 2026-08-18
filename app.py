@@ -768,10 +768,10 @@ def partidos_lista():
 
 def partidos_historial():
     """Los partidos guardados (historial), con su fecha, cancha y cuánta gente
-    tenía anotada. El más reciente primero."""
+    tenía anotada. De más antiguo a más reciente."""
     salida = []
     for f in DB.execute("SELECT * FROM partidos WHERE estado = 'guardado'"
-                        " ORDER BY fecha DESC, id DESC LIMIT 60"):
+                        " ORDER BY fecha ASC, id ASC LIMIT 500"):
         d = dict(f)
         d["fecha_es"] = fecha_es(d["fecha"])
         d["hora_es"] = hora_es(d["hora"])
