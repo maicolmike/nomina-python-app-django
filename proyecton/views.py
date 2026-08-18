@@ -129,7 +129,11 @@ def api_auth(request, accion):
 @_manejar_errors
 def api_post(request, recurso):
     """Rutas de colección: /api/nomina, /api/jugadores, /api/multas,
-    /api/partidos, /api/motivos y /api/config."""
+    /api/partidos, /api/motivos, /api/canchas y /api/config."""
+    if recurso == "canchas" and request.method == "GET":
+        limite = min(20, max(1, servidor.entero(request.GET.get("limite") or "10", 10)))
+        return _responder({"resultados": servidor.canchas_lista(
+            request.GET.get("q") or "", limite)})
     _exigir_directiva(request)
     datos = _cuerpo(request)
 
@@ -184,6 +188,9 @@ def api_post(request, recurso):
         servidor.DB.execute("INSERT INTO motivos_multa (texto, valor) VALUES (?,?)", (texto, valor))
         servidor.DB.commit()
         return _responder({"ok": True})
+
+    if recurso == "canchas":
+        return _responder(servidor.agregar_cancha(datos.get("nombre") or ""))
 
     if recurso == "config":
         for k, v in (datos or {}).items():

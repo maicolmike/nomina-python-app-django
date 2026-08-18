@@ -219,6 +219,10 @@ CREATE TABLE IF NOT EXISTS sesiones (
   nombre TEXT DEFAULT '',
   creado TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS canchas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL UNIQUE
+);
 """
 
 # Estructura general del proyecto:
@@ -376,6 +380,7 @@ def init_db():
         con.executescript(SCHEMA)
         migrar_nomina(con)
         migrar_partidos(con)
+        migrar_canchas(con)
         for clave, valor in CONFIG_DEFAULT.items():
             con.execute("INSERT OR IGNORE INTO config (clave, valor) VALUES (?,?)", (clave, valor))
         if not con.execute("SELECT 1 FROM participantes LIMIT 1").fetchone():
@@ -427,6 +432,20 @@ def migrar_partidos(con):
     columnas = {r[1] for r in con.execute("PRAGMA table_info(partidos)")}
     if "activo" not in columnas:
         con.execute("ALTER TABLE partidos ADD COLUMN activo INTEGER NOT NULL DEFAULT 0")
+        con.commit()
+
+
+def migrar_canchas(con):
+    """Llena la tabla de canchas con las que ya se usaron en partidos.
+
+    La primera vez que corre una base existente, toma las canchas distintas de
+    la tabla partidos y las guarda en "canchas", para que salgan en el
+    autocompletado del formulario de partidos.
+    """
+    if not con.execute("SELECT 1 FROM canchas LIMIT 1").fetchone():
+        con.execute(
+            "INSERT OR IGNORE INTO canchas (nombre)"
+            " SELECT DISTINCT cancha FROM partidos WHERE TRIM(cancha) != ''")
         con.commit()
 
 
@@ -610,6 +629,9 @@ def permite_invitados(partido):
 def crear_partido(fecha, hora, cancha, activo=False):
     if activo:
         DB.execute("UPDATE partidos SET activo = 0 WHERE activo = 1")
+    # Si la cancha no está en la lista de canchas, se guarda sola (así aparece
+    # en el autocompletado de los siguientes partidos).
+    DB.execute("INSERT OR IGNORE INTO canchas (nombre) VALUES (?)", (cancha,))
     cur = DB.execute(
         "INSERT INTO partidos (fecha, hora, cancha, estado, activo, creado) VALUES (?,?,?,?,?,?)",
         (fecha, hora, cancha, "abierta", 1 if activo else 0,
@@ -790,6 +812,7 @@ def estado_completo(rol, partido_id=None):
         },
         "jugadores": jugadores_lista(),
         "partidos": partidos_lista(),
+        "canchas": canchas_lista("", 200),
         "texto": texto_whatsapp(partido),
     }
 
@@ -833,14 +856,32 @@ def texto_whatsapp(partido=None):
         return "\n".join(L)
     L += ["", "*Lugar*: " + partido["cancha"], "*Día*: *" + (dia_semana(partido["fecha"]) or c["dia"]) + "*",
          "*Hora*: " + hora_es(partido["hora"]), "*Fecha*: " + fecha_es(partido["fecha"]), ""]
-    for n in range(total):
-        if n < len(nomina):
-            i = nomina[n]
+    # Numeración por bloques de género: las mujeres ocupan los puestos 1..cupos_f
+    # y los hombres los siguientes, sin importar el orden en que se anotaron.
+    # Así, con 6 cupos de mujer y 6 de hombre, la primera mujer es el puesto 1 y
+    # el primer hombre el puesto 7 (se espera completar los cupos de mujer).
+    cupos_f = cupo_por_genero(c, "F")
+    puestos = {}
+    p = 1
+    for i in nomina:
+        if i["genero"] == "F":
+            puestos[p] = i
+            p += 1
+    p = max(cupos_f + 1, p)  # el bloque de hombres empieza justo después del de mujeres
+    for i in nomina:
+        if i["genero"] != "F":
+            if p > total:
+                break
+            puestos[p] = i
+            p += 1
+    for n in range(1, total + 1):
+        i = puestos.get(n)
+        if i:
             emoji = c["emoji_f"] if i["genero"] == "F" else c["emoji_m"]
             extra = f" ({i['invitado_por']})" if i["invitado_por"] else ""
-            L.append(f"{n + 1}:{emoji} {i['nombre']}{extra}")
+            L.append(f"{n}:{emoji} {i['nombre']}{extra}")
         else:
-            L.append(f"{n + 1}:")
+            L.append(f"{n}:")
     L += ["", "*LISTA DE ESPERA:*"]
     for n, i in enumerate(espera, 1):
         extra = f" ({i['invitado_por']})" if i["invitado_por"] else ""
@@ -1094,6 +1135,33 @@ def autocompletar(q, limite=10, partido_id=None):
     return (empieza + contiene)[:limite]
 
 
+# canchas_lista(q, limite) -> canchas guardadas en la base (tabla "canchas"),
+# para el autocompletado del formulario de partidos. Ordena primero las que
+# empiezan con lo escrito y luego las que solo lo contienen.
+def canchas_lista(q="", limite=50):
+    n = normalizar(q)
+    filas = [f["nombre"] for f in DB.execute(
+        "SELECT nombre FROM canchas ORDER BY nombre COLLATE NOCASE")]
+    if not n:
+        return filas[:limite]
+    empieza = [f for f in filas if normalizar(f).startswith(n)]
+    contiene = [f for f in filas if n in normalizar(f) and f not in empieza]
+    return (empieza + contiene)[:limite]
+
+
+def agregar_cancha(nombre):
+    """Guarda una cancha nueva en la tabla de canchas (para el formulario de partidos)."""
+    nombre = (nombre or "").strip()
+    if not nombre:
+        raise ErrorApp("Escribe el nombre de la cancha")
+    if DB.execute("SELECT 1 FROM canchas WHERE nombre = ? COLLATE NOCASE",
+                  (nombre,)).fetchone():
+        raise ErrorApp("Esa cancha ya existe")
+    DB.execute("INSERT INTO canchas (nombre) VALUES (?)", (nombre,))
+    DB.commit()
+    return {"ok": True, "cancha": nombre}
+
+
 # parsear_voy("voy juan chavez (invitado de Cristian)") ->
 # devuelve ("juan chavez", "invitado de Cristian"). Extrae el nombre y el
 # "invitado de..." de un mensaje que alguien escribe igual en WhatsApp.
@@ -1207,6 +1275,11 @@ class Handler(BaseHTTPRequestHandler):
                         (args.get("q") or [""])[0], limite, pid)})
                 elif u.path == "/api/texto":
                     self.responder({"texto": texto_whatsapp()})
+                elif u.path == "/api/canchas":
+                    args = parse_qs(u.query)
+                    limite = min(20, max(1, entero((args.get("limite") or ["10"])[0], 10)))
+                    self.responder({"resultados": canchas_lista(
+                        (args.get("q") or [""])[0], limite)})
                 else:
                     self.responder({"error": "Ruta no encontrada"}, 404)
         except ErrorApp as e:
@@ -1296,6 +1369,8 @@ class Handler(BaseHTTPRequestHandler):
             DB.execute("INSERT INTO motivos_multa (texto, valor) VALUES (?,?)", (texto, valor))
             DB.commit()
             self.responder({"ok": True})
+        elif ruta == "/api/canchas":
+            self.responder(agregar_cancha(datos.get("nombre") or ""))
         elif ruta == "/api/config":
             for k, v in (datos or {}).items():
                 if k in CONFIG_DEFAULT or k == "pin":

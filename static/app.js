@@ -111,6 +111,7 @@ function pintar() {
 
   pintarNomina();
   pintarPartidos();
+  pintarCanchas();
   pintarMultas();
   pintarJugadores();
   pintarConfig();
@@ -204,6 +205,19 @@ function pintarPartidos() {
         </div>
       </div>
     </div>`).join("");
+}
+
+// pintarCanchas() -> llena los selects de cancha (crear y editar partido) con
+// las canchas guardadas en la base. Conserva la opción que ya estaba elegida.
+function pintarCanchas() {
+  const canchas = estado.canchas || [];
+  for (const id of ["n-cancha", "p-cancha"]) {
+    const sel = $(id);
+    const previa = sel.value;
+    sel.innerHTML = '<option value="">— Elegir cancha —</option>'
+      + canchas.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+    if (previa) sel.value = previa;
+  }
 }
 
 // pintarMultas() -> dibuja el resumen (deuda total, vencidas), los motivos de
@@ -639,6 +653,28 @@ function cancelarEdicionPartido() {
   $("hint-partido-form").textContent = "La fecha, la hora y la cancha son obligatorias para crear el partido.";
 }
 $("btn-cancelar-editar-partido").addEventListener("click", cancelarEdicionPartido);
+
+// ---------------------------------------------------------- cancha nueva
+$("btn-nuevo-cancha").addEventListener("click", () => {
+  $("c-cancha-nueva").value = "";
+  $("card-cancha-nueva").classList.remove("oculto");
+  $("c-cancha-nueva").focus();
+});
+$("btn-cancelar-cancha").addEventListener("click", () => {
+  $("card-cancha-nueva").classList.add("oculto");
+});
+$("btn-guardar-cancha").addEventListener("click", async () => {
+  const nombre = $("c-cancha-nueva").value.trim();
+  if (!nombre) { alert("Escribe el nombre de la cancha"); return; }
+  try {
+    await api("/api/canchas", { method: "POST", body: { nombre } });
+    $("card-cancha-nueva").classList.add("oculto");
+    $("n-cancha").value = nombre;
+    await cargar();
+  } catch (err) {
+    alert(err.message);
+  }
+});
 
 $("btn-crear-partido").addEventListener("click", async () => {
   if (!$("n-fecha").value) { alert("Selecciona la fecha del partido"); return; }

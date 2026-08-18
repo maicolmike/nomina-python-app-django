@@ -11,12 +11,12 @@ from . import views
 #   /api/...  -> la API (JSON) que entiende static/app.js
 #   cualquier otra ruta -> archivos de la interfaz (static/)
 urlpatterns = [
-    # API GET: estado, buscador de participantes, texto de WhatsApp
+    # API GET: estado, buscador de participantes y texto de WhatsApp
     re_path(r"^api/(estado|participantes|texto)$", views.api_get),
     # API login/logout de la directiva
     re_path(r"^api/(login|logout)$", views.api_auth),
-    # API de colecciones (crear nómina, jugadores, multas, partidos, motivos, config)
-    re_path(r"^api/(nomina|jugadores|multas|partidos|motivos|config)$", views.api_post),
+    # API de colecciones (crear nómina, jugadores, multas, partidos, motivos, canchas, config)
+    re_path(r"^api/(nomina|jugadores|multas|partidos|motivos|canchas|config)$", views.api_post),
     # API sobre un elemento concreto: /api/nomina/3, /api/multas/2/pagar...
     re_path(r"^api/(nomina|multas|jugadores|partidos|motivos)/(\d+)(?:/(\w+))?$",
             views.api_item),
