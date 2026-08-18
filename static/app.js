@@ -203,6 +203,7 @@ function pintarPartidos() {
   const dir = estado.rol === "directiva";
   const activoId = estado.partido_activo_id;
   const vistaId = estado.partido_vista_id;
+  $("c-partidos").textContent = `(${estado.partidos.length})`;
   $("lista-partidos").innerHTML = estado.partidos.map((p) => `
     <div class="tarjeta">
       <div class="encabezado-fila">
