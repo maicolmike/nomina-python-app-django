@@ -266,7 +266,7 @@ textarea { font-size: .85rem; }
 #lista-jugadores .encabezado-fila,
 #lista-jugadores .fila {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 54px auto;
+  grid-template-columns: minmax(0, 1fr) 54px 118px;
   gap: 10px;
   align-items: center;
 }
@@ -288,7 +288,7 @@ textarea { font-size: .85rem; }
   gap: 2px;
   align-items: center;
 }
-#lista-jugadores .encabezado-fila .acciones { text-align: right; }
+#lista-jugadores .encabezado-fila .acciones { text-align: left; }
 .vacio { color: #9ca3af; font-style: italic; padding: 10px 6px; font-size: .88rem; }
 .lista-tarjetas .tarjeta { padding: 12px 14px; }
 .encabezado-fila { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
