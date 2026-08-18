@@ -276,12 +276,13 @@ textarea { font-size: .85rem; }
   gap: 4px;
   font-weight: 400;
 }
-#lista-jugadores .fila .acciones {
+#lista-jugadores .fila .acciones,
+#lista-jugadores .encabezado-fila .acciones {
   display: flex;
   gap: 2px;
   align-items: center;
+  padding-left: 14px;
 }
-#lista-jugadores .encabezado-fila .acciones { text-align: left; }
 .vacio { color: #9ca3af; font-style: italic; padding: 10px 6px; font-size: .88rem; }
 .lista-tarjetas .tarjeta { padding: 12px 14px; }
 .encabezado-fila { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
