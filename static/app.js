@@ -140,7 +140,7 @@ function pintarNomina() {
   // ni se mueve/quita a nadie hasta abrir su nómina desde Partidos.
   const guardado = estado.partido && estado.partido.estado === "guardado";
   const editable = dir && !guardado;
-  $("card-anotar").classList.toggle("oculto", guardado);
+  $("card-anotar").classList.toggle("oculto", guardado || !dir);
   $("nota-guardado").classList.toggle("oculto", !guardado);
   const { mujeres, hombres, usadas_f: uf, usadas_m: um } = estado.cupos;
   const total = mujeres + hombres;
