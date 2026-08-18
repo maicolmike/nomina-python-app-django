@@ -237,6 +237,9 @@
   <!-- ========================================================= JUGADORES -->
   <section id="tab-jugadores" class="tab oculto">
     <div class="tarjeta solo-directiva">
+      <button id="btn-nuevo-jugador-top" class="btn morado ancho">➕ Registrar jugador</button>
+    </div>
+    <div id="card-registrar-jugador" class="tarjeta solo-directiva oculto">
       <h3 class="titulo-tarjeta">➕ AGREGAR JUGADOR AL GRUPO</h3>
       <div class="rejilla">
         <label class="ancho">Nombre y apellido <input id="j-nombre"></label>
@@ -244,7 +247,10 @@
           <select id="j-genero"><option value="F">🌹 Mujer</option><option value="M">⚽ Hombre</option></select>
         </label>
       </div>
-      <button id="btn-agregar-jugador" class="btn morado ancho">Agregar jugador</button>
+      <div class="acciones ancho">
+        <button id="btn-agregar-jugador" class="btn morado">Guardar</button>
+        <button id="btn-cancelar-jugador" class="btn rojo">Cancelar</button>
+      </div>
     </div>
     <h2 class="titulo-seccion">👥 JUGADORES DEL GRUPO <small id="c-jugadores"></small></h2>
     <label class="tarjeta">Buscar jugador

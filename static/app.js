@@ -116,6 +116,8 @@ function pintar() {
   $("card-crear-partido").classList.add("oculto");
   // El formulario de registro de multa solo aparece al pulsar "Registrar multa".
   $("card-registrar-multa").classList.add("oculto");
+  // El formulario de jugador solo aparece al pulsar "Registrar jugador".
+  $("card-registrar-jugador").classList.add("oculto");
   $("btn-login").classList.toggle("oculto", dir || !estado.requiere_pin);
   $("btn-logout").classList.toggle("oculto", !dir || !estado.requiere_pin);
 
@@ -1174,6 +1176,17 @@ $("btn-guardar-multa").addEventListener("click", async () => {
 });
 
 // -------------------------------------------------------------- jugadores
+$("btn-nuevo-jugador-top").addEventListener("click", () => {
+  const card = $("card-registrar-jugador");
+  if (card.classList.contains("oculto")) {
+    card.classList.remove("oculto");
+    $("j-nombre").focus();
+  } else {
+    card.classList.add("oculto");
+  }
+});
+$("btn-cancelar-jugador").addEventListener("click", () =>
+  $("card-registrar-jugador").classList.add("oculto"));
 $("btn-agregar-jugador").addEventListener("click", async () => {
   try {
     await api("/api/jugadores", {
