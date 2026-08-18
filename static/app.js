@@ -381,10 +381,17 @@ function tarjetaMulta(m, dir) {
 
 // pintarJugadores() -> dibuja la lista de jugadores con su estado (activo,
 // expulsado, invitad@, deuda) y botones de editar para la directiva.
+// Se muestra de 10 en 10, con paginación como el historial de partidos.
+const JUGADORES_POR_PAGINA = 10;
+let jugadoresPagina = 1;
 function pintarJugadores() {
   const dir = estado.rol === "directiva";
   $("c-jugadores").textContent = `(${estado.jugadores.length})`;
-  $("lista-jugadores").innerHTML = estado.jugadores.map((j) => `
+  const totalPaginas = Math.max(1, Math.ceil(estado.jugadores.length / JUGADORES_POR_PAGINA));
+  jugadoresPagina = Math.max(1, Math.min(jugadoresPagina, totalPaginas));
+  const desde = (jugadoresPagina - 1) * JUGADORES_POR_PAGINA;
+  const pagina = estado.jugadores.slice(desde, desde + JUGADORES_POR_PAGINA);
+  $("lista-jugadores").innerHTML = pagina.map((j) => `
     <div class="fila" data-jugador="${j.id}">
       <span class="nombre">${emoji(j.genero)} ${esc(j.nombre)}
         ${j.activo ? "" : '<span class="etq gris">inactivo</span>'}
@@ -398,7 +405,13 @@ function pintarJugadores() {
         <button class="icono" data-expulsado="${j.id}" data-valor="${j.expulsado ? 0 : 1}"
           title="${j.expulsado ? "Readmitir" : "Expulsar por multas"}">${j.expulsado ? "🔓" : "🔒"}</button>
 <button class="icono" data-borrar-jugador="${j.id}" title="Borrar">🗑</button>` : ""}
-      </div>`).join("");
+      </div>`).join("")
+    + (estado.jugadores.length > JUGADORES_POR_PAGINA ? `
+    <div class="acciones paginacion">
+      <button class="btn claro chico" data-jug-prev ${jugadoresPagina <= 1 ? "disabled" : ""}>‹ Anterior</button>
+      <span>Página ${jugadoresPagina} de ${totalPaginas}</span>
+      <button class="btn claro chico" data-jug-next ${jugadoresPagina >= totalPaginas ? "disabled" : ""}>Siguiente ›</button>
+    </div>` : "");
 }
 
 // ------------------------------------------------------- buscar jugador
@@ -437,6 +450,11 @@ function pintarSugerenciasBuscarJugador() {
 function elegirJugadorBuscar(s) {
   $("j-buscar").value = s.nombre;
   $("j-buscar-sugerencias").classList.add("oculto");
+  const idx = estado.jugadores.findIndex((j) => String(j.id) === String(s.id));
+  if (idx >= 0) {
+    jugadoresPagina = Math.floor(idx / JUGADORES_POR_PAGINA) + 1;
+    pintarJugadores();
+  }
   const fila = document.querySelector(`[data-jugador="${s.id}"]`);
   if (fila) {
     fila.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -740,6 +758,14 @@ document.addEventListener("click", async (e) => {
     } else if (d.histNext) {
       historialPagina++;
       pintarHistorial();
+      return;
+    } else if (d.jugPrev) {
+      jugadoresPagina = Math.max(1, jugadoresPagina - 1);
+      pintarJugadores();
+      return;
+    } else if (d.jugNext) {
+      jugadoresPagina++;
+      pintarJugadores();
       return;
     } else if (d.verPartido) {
       partidoEnVista = d.verPartido;
