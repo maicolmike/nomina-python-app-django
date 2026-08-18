@@ -262,6 +262,7 @@ function pintarHistorial() {
         <span class="detalle">${esc(p.cancha)} · ${p.en_nomina} en nómina · ${p.en_espera} en espera</span></span>
       <button class="btn claro chico" data-ver-partido="${p.id}">Ver nómina</button>
       <button class="btn claro chico" data-abrir-nomina="${p.id}">Re abrir nómina</button>
+      <button class="icono" data-borrar-historial="${p.id}" title="Borrar">🗑</button>
     </div>`).join("")
     : '<p class="vacio">Aún no hay partidos en el historial. Guarda un partido desde la lista de arriba para archivarlo aquí.</p>';
 
@@ -753,6 +754,9 @@ document.addEventListener("click", async (e) => {
     } else if (d.borrarPartido) {
       if (!confirm("¿Borrar este partido y su nómina?")) return;
       await api(`/api/partidos/${d.borrarPartido}`, { method: "DELETE" });
+    } else if (d.borrarHistorial) {
+      if (!confirm("¿Borrar este partido del historial?")) return;
+      await api(`/api/partidos/${d.borrarHistorial}`, { method: "DELETE" });
     } else if (d.guardarPartido) {
       if (!confirm("¿Guardar este partido en el historial? Ya no aparecerá en la lista de partidos.")) return;
       await api(`/api/partidos/${d.guardarPartido}/guardar`, { method: "POST", body: {} });
@@ -947,6 +951,35 @@ $("h-buscar").addEventListener("input", () => {
     historialBusqueda = normalizar($("h-buscar").value);
     pintarHistorial();
   }, 140);
+});
+$("btn-hist-eliminar-todo").addEventListener("click", async () => {
+  if (!confirm("¿Eliminar TODO el historial de partidos? Esta acción no se puede deshacer.")) return;
+  const r = await api("/api/partidos/historial", { method: "DELETE", body: {} });
+  $("h-buscar").value = "";
+  historialBusqueda = "";
+  await cargar();
+  $("card-historial").classList.remove("oculto");
+  $("btn-ver-historial").textContent = "Ocultar";
+  aviso(`Historial eliminado (${r.borrados || 0} partidos).`);
+});
+$("btn-hist-eliminar-anio").addEventListener("click", () => {
+  const form = $("form-hist-anio");
+  form.classList.toggle("oculto");
+  if (!form.classList.contains("oculto")) $("hist-anio").focus();
+});
+$("btn-hist-cancelar-anio").addEventListener("click", () =>
+  $("form-hist-anio").classList.add("oculto"));
+$("btn-hist-borrar-anio").addEventListener("click", async () => {
+  const anio = $("hist-anio").value.trim();
+  if (!/^\d{4}$/.test(anio)) { alert("Escribe un año de 4 dígitos (ej: 2026)"); return; }
+  if (!confirm(`¿Eliminar del historial todo lo del año ${anio}?`)) return;
+  const r = await api("/api/partidos/historial", { method: "DELETE", body: { anio } });
+  $("hist-anio").value = "";
+  $("form-hist-anio").classList.add("oculto");
+  await cargar();
+  $("card-historial").classList.remove("oculto");
+  $("btn-ver-historial").textContent = "Ocultar";
+  aviso(`Se eliminaron ${r.borrados || 0} partidos de ${anio}.`);
 });
 $("btn-cancelar-cancha").addEventListener("click", () => {
   resetFormCancha();

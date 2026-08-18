@@ -207,6 +207,15 @@ def api_post(request, recurso):
 
 @csrf_exempt
 @_manejar_errors
+def api_historial(request, **kwargs):
+    """DELETE /api/partidos/historial: borra todo el historial, o solo el de
+    un año si el cuerpo trae {"anio": "2026"}."""
+    _exigir_directiva(request)
+    return _responder(servidor.borrar_historial(_cuerpo(request)))
+
+
+@csrf_exempt
+@_manejar_errors
 def api_item(request, recurso, ident, accion=None):
     """Rutas sobre un elemento concreto: /api/nomina/3, /api/multas/2/pagar...
     Reproduce exactamente la función enrutar_item() de app.py."""

@@ -17,6 +17,8 @@ urlpatterns = [
     re_path(r"^api/(login|logout)$", views.api_auth),
     # API de colecciones (crear nómina, jugadores, multas, partidos, motivos, canchas, config)
     re_path(r"^api/(nomina|jugadores|multas|partidos|motivos|canchas|config)$", views.api_post),
+    # Borrado en bloque del historial de partidos (todo o por año)
+    re_path(r"^api/partidos/historial$", views.api_historial),
     # API sobre un elemento concreto: /api/nomina/3, /api/multas/2/pagar...
     re_path(r"^api/(nomina|multas|jugadores|partidos|motivos|canchas)/(\d+)(?:/(\w+))?$",
             views.api_item),

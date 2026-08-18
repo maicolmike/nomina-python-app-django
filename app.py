@@ -793,6 +793,24 @@ def partidos_historial():
     return salida
 
 
+def borrar_historial(datos=None):
+    """Borra del historial los partidos guardados. Si "datos" trae un "anio"
+    de 4 dígitos, borra solo los partidos de ese año; si no, borra todo el
+    historial. Devuelve cuántos partidos se borraron."""
+    anio = (datos.get("anio") or "").strip() if datos else ""
+    if anio and (not anio.isdigit() or len(anio) != 4):
+        raise ErrorApp("El año debe tener 4 dígitos")
+    if anio:
+        cur = DB.execute(
+            "DELETE FROM partidos WHERE estado = 'guardado' AND fecha LIKE ?",
+            (anio + "-%",),
+        )
+    else:
+        cur = DB.execute("DELETE FROM partidos WHERE estado = 'guardado'")
+    DB.commit()
+    return {"ok": True, "borrados": cur.rowcount}
+
+
 def guardar_partido(ident):
     """Pasa un partido al historial (estado 'guardado'). Si era el partido en
     uso, deja otro partido 'en curso' como activo. El guardado ya no aparece en
@@ -1433,6 +1451,10 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         self.exigir_directiva()
+        # Borrado en bloque del historial (todo o por año): DELETE /api/partidos/historial
+        if ruta == "/api/partidos/historial":
+            self.responder(borrar_historial(datos))
+            return
         m = re.fullmatch(r"/api/(nomina|multas|jugadores|partidos|motivos|canchas)/(\d+)(?:/(\w+))?", ruta)
         if m:
             self.enrutar_item(m.group(1), int(m.group(2)), m.group(3), datos)
