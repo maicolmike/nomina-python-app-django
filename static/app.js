@@ -255,9 +255,9 @@ function pintarHistorial() {
 
   const controles = h.length > HISTORIAL_POR_PAGINA ? `
     <div class="acciones paginacion">
-      <button class="btn claro chico" data-hist-prev ${historialPagina <= 1 ? "disabled" : ""}>‹ Anterior</button>
+      <button class="btn claro chico" data-hist-prev="1" ${historialPagina <= 1 ? "disabled" : ""}>‹ Anterior</button>
       <span>Página ${historialPagina} de ${totalPaginas}</span>
-      <button class="btn claro chico" data-hist-next ${historialPagina >= totalPaginas ? "disabled" : ""}>Siguiente ›</button>
+      <button class="btn claro chico" data-hist-next="1" ${historialPagina >= totalPaginas ? "disabled" : ""}>Siguiente ›</button>
     </div>` : "";
 
   $("historial-partidos").innerHTML = contenido + controles;
@@ -408,9 +408,9 @@ function pintarJugadores() {
       </div>`).join("")
     + (estado.jugadores.length > JUGADORES_POR_PAGINA ? `
     <div class="acciones paginacion">
-      <button class="btn claro chico" data-jug-prev ${jugadoresPagina <= 1 ? "disabled" : ""}>‹ Anterior</button>
+      <button class="btn claro chico" data-jug-prev="1" ${jugadoresPagina <= 1 ? "disabled" : ""}>‹ Anterior</button>
       <span>Página ${jugadoresPagina} de ${totalPaginas}</span>
-      <button class="btn claro chico" data-jug-next ${jugadoresPagina >= totalPaginas ? "disabled" : ""}>Siguiente ›</button>
+      <button class="btn claro chico" data-jug-next="1" ${jugadoresPagina >= totalPaginas ? "disabled" : ""}>Siguiente ›</button>
     </div>` : "");
 }
 
