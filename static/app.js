@@ -109,7 +109,9 @@ function pintar() {
   });
   $("card-motivos-personalizados").classList.add("oculto");
   $("card-cancha-nueva").classList.add("oculto");
-  if (!dir) $("card-historial").classList.add("oculto");
+  // El historial de partidos siempre arranca oculto: solo se ve al pulsar "Ver".
+  $("card-historial").classList.add("oculto");
+  $("btn-ver-historial").textContent = "Ver";
   $("btn-login").classList.toggle("oculto", dir || !estado.requiere_pin);
   $("btn-logout").classList.toggle("oculto", !dir || !estado.requiere_pin);
 
@@ -722,8 +724,6 @@ document.addEventListener("click", async (e) => {
     } else if (d.guardarPartido) {
       if (!confirm("¿Guardar este partido en el historial? Ya no aparecerá en la lista de partidos.")) return;
       await api(`/api/partidos/${d.guardarPartido}/guardar`, { method: "POST", body: {} });
-      $("card-historial").classList.remove("oculto");
-      $("btn-ver-historial").textContent = "Ocultar";
     } else if (d.abrirNomina) {
       if (!confirm("¿Re abrir la nómina de este partido? Volverá a la lista de partidos y se podrá editar.")) return;
       await api(`/api/partidos/${d.abrirNomina}/abrir`, { method: "POST", body: {} });
