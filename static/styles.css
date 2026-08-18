@@ -130,6 +130,9 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn.chico { padding: 5px 10px; font-size: .74rem; }
 .btn.ancho { width: 100%; margin-top: 10px; }
 .btn.morado:hover { background: #198754; color: #fff; }
+.btn.warning { background: #ffc107; color: #1f2937; }
+.btn.rojo:hover,
+#btn-ver-historial:hover { background: #198754; color: #fff; }
 .btn:hover { filter: brightness(1.08); }
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .paginacion { justify-content: center; align-items: center; font-size: .78rem; }
@@ -146,6 +149,7 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
   padding: 4px;
   line-height: 1;
 }
+.icono:hover { background: #198754; color: #fff; border-radius: 7px; }
 
 /* ------------------------------------------------------------ formulario */
 .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
