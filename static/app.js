@@ -195,7 +195,7 @@ function filaJugador(i, n, dir, destino) {
     <span class="nombre">${emoji(i.genero)} ${esc(i.nombre)}
       ${i.invitado_por ? `<small>(${esc(i.invitado_por)})</small>` : ""}
       ${i.miembro ? "" : '<span class="etq gris">invitad@</span>'}</span>
-    ${dir ? `<button class="btn claro chico" data-mover="${i.id}" data-lista="${destino}">${
+    ${dir ? `<button class="btn gris chico" data-mover="${i.id}" data-lista="${destino}">${
       destino === "espera" ? "→ espera" : "→ nómina"}</button>
       <button class="icono" data-quitar="${i.id}" title="Quitar">🗑</button>` : ""}
   </div>`;
