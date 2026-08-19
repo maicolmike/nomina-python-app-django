@@ -157,13 +157,12 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn:hover { filter: brightness(1.08); }
 /* Guardar configuración: al pasar el mouse se pone azul con texto blanco. */
 #btn-guardar-config:hover { background: #0d6efd; color: #fff; filter: none; }
-/* Botón de copia de seguridad: azul claro y al pasar el mouse azul sólido. */
+/* Botón de copia de seguridad: azul sólido y al pasar el mouse verde. */
 .btn.respaldo {
-  background: #eaf3ff;
-  color: #0d6efd;
-  border: 1px solid #0d6efd;
+  background: #0d6efd;
+  color: #fff;
 }
-.btn.respaldo:hover { background: #0d6efd; color: #fff; filter: none; }
+.btn.respaldo:hover { background: #198754; color: #fff; filter: none; }
 .tarjeta-backup {
   background: linear-gradient(135deg, #f0f7ff, #e6f0ff);
   border: 1px solid #cfe3ff;
