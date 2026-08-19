@@ -801,6 +801,24 @@ def partidos_historial():
     return salida
 
 
+def hacer_backup():
+    """Copia de seguridad de la base de datos: crea backup_nomina_AAAAMMDD_HHMM.db
+    en la misma carpeta que la base, usando la copia segura de SQLite (funciona
+    aunque la app esté abierta). Devuelve el nombre del archivo creado."""
+    if not os.path.exists(DB_PATH):
+        raise ErrorApp("No existe la base de datos")
+    destino = os.path.join(os.path.dirname(DB_PATH),
+                           f"backup_nomina_{datetime.now().strftime('%Y%m%d_%H%M')}.db")
+    src = sqlite3.connect(DB_PATH)
+    dst = sqlite3.connect(destino)
+    try:
+        src.backup(dst)
+    finally:
+        dst.close()
+        src.close()
+    return {"ok": True, "archivo": os.path.basename(destino)}
+
+
 def borrar_historial(datos=None):
     """Borra del historial los partidos guardados. Si "datos" trae un "anio"
     de 4 dígitos, borra solo los partidos de ese año; si no, borra todo el
@@ -1462,6 +1480,10 @@ class Handler(BaseHTTPRequestHandler):
         # Borrado en bloque del historial (todo o por año): DELETE /api/partidos/historial
         if ruta == "/api/partidos/historial":
             self.responder(borrar_historial(datos))
+            return
+        # Copia de seguridad: POST /api/config/backup
+        if ruta == "/api/config/backup":
+            self.responder(hacer_backup())
             return
         m = re.fullmatch(r"/api/(nomina|multas|jugadores|partidos|motivos|canchas)/(\d+)(?:/(\w+))?", ruta)
         if m:

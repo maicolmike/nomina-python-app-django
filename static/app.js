@@ -1333,6 +1333,15 @@ $("btn-guardar-config").addEventListener("click", async () => {
     alert(err.message);
   }
 });
+$("btn-backup").addEventListener("click", async () => {
+  if (!confirm("¿Crear una copia de seguridad de la base de datos?")) return;
+  try {
+    const r = await api("/api/config/backup", { method: "POST" });
+    aviso(`Backup creado: ${r.archivo} (en la carpeta de la app).`);
+  } catch (err) {
+    aviso(err.message, true);
+  }
+});
 
 // ------------------------------------------------------- whatsapp y login
 // "estado.texto" es el mensaje listo para pegar en WhatsApp que arma el servidor.

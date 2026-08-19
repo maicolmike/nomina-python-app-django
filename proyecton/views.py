@@ -207,6 +207,14 @@ def api_post(request, recurso):
 
 @csrf_exempt
 @_manejar_errors
+def api_backup(request, **kwargs):
+    """POST /api/config/backup: crea una copia de seguridad de la base."""
+    _exigir_directiva(request)
+    return _responder(servidor.hacer_backup())
+
+
+@csrf_exempt
+@_manejar_errors
 def api_historial(request, **kwargs):
     """DELETE /api/partidos/historial: borra todo el historial, o solo el de
     un año si el cuerpo trae {"anio": "2026"}."""
