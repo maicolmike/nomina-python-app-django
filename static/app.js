@@ -1337,7 +1337,7 @@ $("btn-backup").addEventListener("click", async () => {
   if (!confirm("¿Crear una copia de seguridad de la base de datos?")) return;
   try {
     const r = await api("/api/config/backup", { method: "POST" });
-    aviso(`Backup creado: ${r.archivo} (en la carpeta de la app).`);
+    aviso(`Backup creado: ${r.archivo} (en la carpeta backups/).`);
   } catch (err) {
     aviso(err.message, true);
   }

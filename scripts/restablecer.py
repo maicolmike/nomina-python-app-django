@@ -6,10 +6,10 @@ Advertencia: ESTO BORRA TODO lo que haya en la base actual (nóminas, multas,
 jugadores agregados, config...) y la vuelve a crear con los datos de ejemplo
 (PARTICIPANTES_SEED, MULTAS_SEED y la configuración por defecto).
 
-Antes de ejecutarlo, conviene correr primero:  python backup.py
+Antes de ejecutarlo, conviene correr primero:  python scripts/backup.py
 
 Uso:
-    python restablecer.py
+    python scripts/restablecer.py
 
 Te pedirá escribir BORRAR para confirmar.
 En PythonAnywhere: después de ejecutarlo, pulsa Reload en la pestaña Web
@@ -18,8 +18,9 @@ para que el sitio abra la base nueva.
 import os
 import sys
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.environ.get("NOMINA_DB", os.path.join(BASE_DIR, "nomina.db"))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROYECTO_DIR = os.path.dirname(SCRIPT_DIR)
+DB_PATH = os.environ.get("NOMINA_DB", os.path.join(PROYECTO_DIR, "nomina.db"))
 
 
 def main():
@@ -34,7 +35,7 @@ def main():
         if os.path.exists(ruta):
             os.remove(ruta)
             print(f"Borrado: {ruta}")
-    sys.path.insert(0, BASE_DIR)
+    sys.path.insert(0, PROYECTO_DIR)
     import app as servidor
     servidor.init_db()
     print("Base restablecida con la información inicial.")

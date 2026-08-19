@@ -1,7 +1,11 @@
 # Base de datos local (contiene los datos del grupo)
 nomina.db
 
-# Caché de Python
+# Backups generados por Config > Hacer backup y scripts/backup.py
+backups/*
+!backups/.gitkeep
+
+# CachǸ de Python
 __pycache__/
 *.pyc
 

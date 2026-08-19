@@ -803,11 +803,13 @@ def partidos_historial():
 
 def hacer_backup():
     """Copia de seguridad de la base de datos: crea backup_nomina_AAAAMMDD_HHMM.db
-    en la misma carpeta que la base, usando la copia segura de SQLite (funciona
-    aunque la app esté abierta). Devuelve el nombre del archivo creado."""
+    en la carpeta "backups" del proyecto, usando la copia segura de SQLite
+    (funciona aunque la app esté abierta). Devuelve el nombre del archivo creado."""
     if not os.path.exists(DB_PATH):
         raise ErrorApp("No existe la base de datos")
-    destino = os.path.join(os.path.dirname(DB_PATH),
+    dir_backup = os.path.join(BASE_DIR, "backups")
+    os.makedirs(dir_backup, exist_ok=True)
+    destino = os.path.join(dir_backup,
                            f"backup_nomina_{datetime.now().strftime('%Y%m%d_%H%M')}.db")
     src = sqlite3.connect(DB_PATH)
     dst = sqlite3.connect(destino)

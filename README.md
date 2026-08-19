@@ -28,6 +28,14 @@ primera vez. Ese archivo es tu respaldo: cópialo y tienes todo (participantes, 
 multas, partidos y configuración). Si lo borras, la app arranca de nuevo con los datos
 de ejemplo cargados.
 
+Las **copias de seguridad** se guardan en la carpeta **`backups/`** y se pueden crear de
+dos formas:
+- Desde la web: pestaña **Config** → botón **«💾 Hacer backup»**.
+- Desde consola: `python scripts/backup.py` (crea `backup_nomina_AAAAMMDD_HHMM.db`).
+
+Para restaurar una copia: copia el `backup_nomina_...db` elegido como `nomina.db` en la
+raíz del proyecto (y recarga la web).
+
 ## Pestañas
 
 | Pestaña | Qué hace |
@@ -65,10 +73,15 @@ antes de anotar igual.
 
 ```
 nomina-app/
-├── app.py            # servidor + API + base de datos (solo Python estándar)
+├── app.py                # servidor + API + base de datos (solo Python estándar)
 ├── README.md
-└── static/
-    ├── index.html    # pestañas
-    ├── app.js        # lógica de la interfaz
-    └── styles.css    # estilo
+├── static/               # interfaz web
+│   ├── index.html        # pestañas
+│   ├── app.js            # lógica de la interfaz
+│   └── styles.css        # estilo
+├── scripts/              # utilidades de consola
+│   ├── backup.py         # hace una copia de seguridad de la base
+│   └── restablecer.py    # borra la base y recarga los datos de ejemplo
+├── backups/              # las copias de seguridad que se vayan haciendo
+└── proyecton/            # adaptador Django (despliegue en PythonAnywhere)
 ```
