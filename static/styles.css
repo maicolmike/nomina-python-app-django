@@ -155,6 +155,19 @@ main { max-width: 640px; margin: 0 auto; padding: 14px; }
 .btn.warning { background: #ffc107; color: #1f2937; }
 .btn.gris { background: #6b7280; color: #fff; }
 .btn:hover { filter: brightness(1.08); }
+/* Guardar configuración: al pasar el mouse se pone azul con texto blanco. */
+#btn-guardar-config:hover { background: #0d6efd; color: #fff; filter: none; }
+/* Botón de copia de seguridad: azul claro y al pasar el mouse azul sólido. */
+.btn.respaldo {
+  background: #eaf3ff;
+  color: #0d6efd;
+  border: 1px solid #0d6efd;
+}
+.btn.respaldo:hover { background: #0d6efd; color: #fff; filter: none; }
+.tarjeta-backup {
+  background: linear-gradient(135deg, #f0f7ff, #e6f0ff);
+  border: 1px solid #cfe3ff;
+}
 [title^="Borrar"], [title="Quitar"] { color: var(--rojo); }
 .acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .paginacion { justify-content: center; align-items: center; font-size: .78rem; }
