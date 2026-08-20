@@ -98,6 +98,16 @@ async function cargar(id = null) {
   pintar();
 }
 
+// Recordar en el navegador qué nómina está viendo la persona: así, al recargar
+// la página, se queda en el partido que estaba mirando (p. ej. el del domingo)
+// y NO salta al que la directiva esté usando. Si no está viendo ningún partido
+// especial (partidoEnVista = null), se muestra el partido en uso, como siempre.
+const CLAVE_VISTA = "partido_vista";
+function guardarVistaSeleccionada() {
+  if (partidoEnVista) localStorage.setItem(CLAVE_VISTA, String(partidoEnVista));
+  else localStorage.removeItem(CLAVE_VISTA);
+}
+
 // ------------------------------------------------------------------ pintado
 // pintar() -> recibe el estado del servidor (guardado en "estado") y actualiza
 // los paneles, tablas y textos visibles en la página.
@@ -783,6 +793,7 @@ document.addEventListener("click", async (e) => {
       if (!confirm("¿Re abrir la nómina de este partido? Volverá a la lista de partidos y se podrá editar.")) return;
       await api(`/api/partidos/${d.abrirNomina}/abrir`, { method: "POST", body: {} });
       partidoEnVista = d.abrirNomina;
+      guardarVistaSeleccionada();
       await cargar(partidoEnVista);
       document.querySelector('.tabs button[data-tab="nomina"]').click();
       return;
@@ -804,12 +815,14 @@ document.addEventListener("click", async (e) => {
       return;
     } else if (d.verPartido) {
       partidoEnVista = d.verPartido;
+      guardarVistaSeleccionada();
       await cargar(partidoEnVista);
       document.querySelector('.tabs button[data-tab="nomina"]').click();
       return;
     } else if (d.usarPartido) {
       await api(`/api/partidos/${d.usarPartido}/usar`, { method: "POST", body: {} });
       partidoEnVista = d.usarPartido;
+      guardarVistaSeleccionada();
       await cargar(partidoEnVista);
       document.querySelector('.tabs button[data-tab="nomina"]').click();
       return;
@@ -1048,6 +1061,7 @@ $("btn-crear-partido").addEventListener("click", async () => {
       });
       cancelarEdicionPartido();
       partidoEnVista = r.id;
+      guardarVistaSeleccionada();
       await cargar(partidoEnVista);
       document.querySelector('.tabs button[data-tab="nomina"]').click();
     }
@@ -1442,7 +1456,7 @@ window.addEventListener("pageshow", () => {
   $("aviso").classList.add("oculto");
 });
 
-cargar().then(() => {
+function aplicarPestanaGuardada() {
   const guardada = localStorage.getItem("pestana");
   const valida = guardada && document.querySelector(`.tabs button[data-tab="${guardada}"]`);
   if (guardada === "config" && estado.rol !== "directiva") {
@@ -1451,5 +1465,25 @@ cargar().then(() => {
     activarTab(guardada);
   } else {
     activarTab("partidos");
+  }
+}
+
+cargar().then(() => {
+  const vista = localStorage.getItem(CLAVE_VISTA);
+  if (vista && /^\d+$/.test(vista)) {
+    partidoEnVista = vista;
+    cargar(vista).then(() => {
+      // Si ese partido ya no está (lo borraron o cancelaron), volver al
+      // partido en uso y olvidar la vista guardada.
+      if (String(estado.partido_vista_id) !== String(vista)) {
+        partidoEnVista = null;
+        localStorage.removeItem(CLAVE_VISTA);
+        cargar().then(aplicarPestanaGuardada);
+        return;
+      }
+      aplicarPestanaGuardada();
+    });
+  } else {
+    aplicarPestanaGuardada();
   }
 });
