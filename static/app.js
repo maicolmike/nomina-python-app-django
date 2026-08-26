@@ -1420,6 +1420,279 @@ $("btn-copiar").addEventListener("click", async () => {
   setTimeout(() => (boton.textContent = "Copiar"), 2000);
 });
 
+// ------------------------------------------------------- imagen de nómina
+// generarImagenNomina() -> dibuja una imagen con la información de la nómina
+// y la copia al portapapeles (o la descarga como respaldo).
+async function generarImagenNomina() {
+  const boton = $("btn-imagen");
+  boton.textContent = "Generando...";
+  boton.disabled = true;
+  try {
+    const c = estado.config;
+    const p = estado.partido;
+    if (!p) {
+      alert("No hay partido activo para generar la imagen.");
+      return;
+    }
+    const { mujeres: cuposF, hombres: cuposM, usadas_f: uf, usadas_m: um } = estado.cupos;
+    const total = cuposF + cuposM;
+    const nominaF = estado.nomina.filter((i) => i.genero === "F");
+    const nominaM = estado.nomina.filter((i) => i.genero === "M");
+    const esperaF = estado.espera.filter((i) => i.genero === "F");
+    const esperaM = estado.espera.filter((i) => i.genero === "M");
+
+    // --- CONFIGURACIÓN DEL CANVAS ---
+    const W = 1080;
+    const PAD = 60;
+    const FONDO = "#ffffff";
+    const MORADO = "#3b0f7a";
+    const MORADO_CLARO = "#5b21b6";
+    const ROSE = "#fdf2f8";
+    const ROSE_BORDER = "#fbcfe8";
+    const BLUE = "#eff6ff";
+    const BLUE_BORDER = "#bfdbfe";
+    const TEXTO = "#1f2937";
+    const SUAVE = "#6b7280";
+    const VERDE = "#16a34a";
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    // Primera pasada: calcular altura total
+    let H = 0;
+    const LH = 36; // línea de altura
+    const SEC_PADDING = 30;
+
+    H += 50; // grupo nombre
+    H += 10; // espacio
+    H += LH; // fecha
+    H += LH; // hora
+    H += LH; // cancha
+    H += 30; // espacio antes de nómina
+    // nómina mujeres
+    H += SEC_PADDING; // padding superior
+    H += 44; // título sección
+    H += cuposF * LH; // líneas
+    H += SEC_PADDING; // padding inferior
+    H += 20; // espacio
+    // nómina hombres
+    H += SEC_PADDING;
+    H += 44;
+    H += cuposM * LH;
+    H += SEC_PADDING;
+    H += 20;
+    // lista de espera
+    H += SEC_PADDING;
+    H += 44; // título "LISTA DE ESPERA"
+    H += LH; // sub-título "Mujeres:"
+    H += (esperaF.length || 1) * LH; // mujeres espera (mínimo 1 línea)
+    H += 10; // espacio entre secciones
+    H += LH; // sub-título "Hombres:"
+    H += (esperaM.length || 1) * LH; // hombres espera
+    H += SEC_PADDING;
+    H += 40; // margen inferior
+
+    canvas.width = W;
+    canvas.height = H;
+
+    // --- FONDO ---
+    ctx.fillStyle = FONDO;
+    ctx.fillRect(0, 0, W, H);
+
+    let y = 0;
+
+    // --- ENCABEZADO: nombre del grupo ---
+    ctx.fillStyle = MORADO;
+    ctx.font = "bold 38px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(c.nombre_grupo, W / 2, y + 42);
+    y += 55;
+
+    ctx.textAlign = "left";
+    ctx.font = "bold 30px sans-serif";
+    ctx.fillStyle = MORADO;
+
+    const infoItems = [
+      { label: "📅 Fecha:", value: p.fecha_es },
+      { label: "🕕 Hora:", value: p.hora_es },
+      { label: "🏟 Cancha:", value: p.cancha },
+    ];
+    for (const item of infoItems) {
+      ctx.font = "bold 30px sans-serif";
+      ctx.fillStyle = MORADO;
+      ctx.fillText(item.label, PAD, y + 28);
+      ctx.font = "30px sans-serif";
+      ctx.fillStyle = TEXTO;
+      ctx.fillText(" " + item.value, PAD + ctx.measureText(item.label).width, y + 28);
+      y += LH;
+    }
+    y += 20;
+
+    // --- FUNCIÓN AUXILIAR: dibujar sección de género ---
+    function dibujarSeccion(titulo, emoji, lista, cupos, colorFondo, colorBorde, numeroInicio) {
+      // Fondo de sección
+      ctx.fillStyle = colorFondo;
+      roundRect(ctx, PAD - 20, y, W - (PAD - 20) * 2, SEC_PADDING * 2 + 44 + cupos * LH, 16);
+      ctx.fill();
+      ctx.strokeStyle = colorBorde;
+      ctx.lineWidth = 2;
+      roundRect(ctx, PAD - 20, y, W - (PAD - 20) * 2, SEC_PADDING * 2 + 44 + cupos * LH, 16);
+      ctx.stroke();
+
+      y += SEC_PADDING;
+
+      // Título
+      ctx.font = "bold 32px sans-serif";
+      ctx.fillStyle = MORADO;
+      ctx.textAlign = "left";
+      ctx.fillText(`${emoji} ${titulo}`, PAD, y + 32);
+      ctx.font = "28px sans-serif";
+      ctx.fillStyle = SUAVE;
+      const used = lista.length;
+      ctx.fillText(`  ${used}/${cupos}`, PAD + ctx.measureText(`${emoji} ${titulo}`).width + 10, y + 32);
+      y += 44;
+
+      // Líneas numeradas
+      ctx.font = "28px sans-serif";
+      for (let n = 0; n < cupos; n++) {
+        const num = numeroInicio + n;
+        const jugador = n < lista.length ? lista[n] : null;
+        ctx.fillStyle = SUAVE;
+        ctx.fillText(`${num + 1}:`, PAD + 20, y + 26);
+        if (jugador) {
+          const emojiJ = jugador.genero === "F" ? (c.emoji_f || "🌹") : (c.emoji_m || "⚽");
+          const extra = jugador.invitado_por ? ` (${jugador.invitado_por})` : "";
+          ctx.fillStyle = TEXTO;
+          ctx.fillText(`${emojiJ} ${jugador.nombre}${extra}`, PAD + 60, y + 26);
+        }
+        y += LH;
+      }
+
+      y += SEC_PADDING;
+    }
+
+    // --- NÓMINA MUJERES ---
+    dibujarSeccion("MUJERES", "🌹", nominaF, cuposF, ROSE, ROSE_BORDER, 0);
+
+    y += 20;
+
+    // --- NÓMINA HOMBRES ---
+    dibujarSeccion("HOMBRES", "⚽", nominaM, cuposM, BLUE, BLUE_BORDER, cuposF);
+
+    y += 20;
+
+    // --- LISTA DE ESPERA ---
+    ctx.fillStyle = "#f9fafb";
+    const esperaAltura = SEC_PADDING * 2 + 44 + LH + Math.max(esperaF.length, 1) * LH + 10 + LH + Math.max(esperaM.length, 1) * LH;
+    roundRect(ctx, PAD - 20, y, W - (PAD - 20) * 2, esperaAltura, 16);
+    ctx.fill();
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 2;
+    roundRect(ctx, PAD - 20, y, W - (PAD - 20) * 2, esperaAltura, 16);
+    ctx.stroke();
+
+    y += SEC_PADDING;
+
+    ctx.font = "bold 32px sans-serif";
+    ctx.fillStyle = MORADO;
+    ctx.fillText("📋 LISTA DE ESPERA", PAD, y + 32);
+    y += 44;
+
+    // Espera mujeres
+    ctx.font = "bold 26px sans-serif";
+    ctx.fillStyle = MORADO;
+    ctx.fillText(`🌹 Mujeres:`, PAD + 20, y + 24);
+    y += LH;
+    ctx.font = "26px sans-serif";
+    if (esperaF.length) {
+      for (const i of esperaF) {
+        ctx.fillStyle = TEXTO;
+        ctx.fillText(`• ${i.nombre}`, PAD + 40, y + 24);
+        y += LH;
+      }
+    } else {
+      ctx.fillStyle = SUAVE;
+      ctx.fillText("(ninguna)", PAD + 40, y + 24);
+      y += LH;
+    }
+    y += 10;
+
+    // Espera hombres
+    ctx.font = "bold 26px sans-serif";
+    ctx.fillStyle = MORADO;
+    ctx.fillText(`⚽ Hombres:`, PAD + 20, y + 24);
+    y += LH;
+    ctx.font = "26px sans-serif";
+    if (esperaM.length) {
+      for (const i of esperaM) {
+        ctx.fillStyle = TEXTO;
+        ctx.fillText(`• ${i.nombre}`, PAD + 40, y + 24);
+        y += LH;
+      }
+    } else {
+      ctx.fillStyle = SUAVE;
+      ctx.fillText("(ninguno)", PAD + 40, y + 24);
+      y += LH;
+    }
+
+    // --- COMPARTIR O DESCARGAR ---
+    const blob = await new Promise((res) => canvas.toBlob(res, "image/png"));
+    const archivo = new File([blob], "nomina.png", { type: "image/png" });
+
+    // Móvil: usar Web Share API para enviar directo a WhatsApp u otra app.
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      await navigator.share({ files: [archivo] });
+      boton.textContent = "¡Compartida!";
+    } else if (navigator.clipboard && window.isSecureContext && navigator.clipboard.write) {
+      // Escritorio: copiar imagen al portapapeles.
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+        boton.textContent = "¡Imagen copiada!";
+      } catch {
+        // Último recurso: descargar
+        descargarBlob(blob);
+        boton.textContent = "Descargada";
+      }
+    } else {
+      // Si no hay nada disponible: descargar
+      descargarBlob(blob);
+      boton.textContent = "Descargada";
+    }
+    setTimeout(() => { boton.textContent = "Imagen"; boton.disabled = false; }, 2500);
+  } catch (e) {
+    console.error("Error al generar imagen:", e);
+    boton.textContent = "Error";
+    setTimeout(() => { boton.textContent = "Imagen"; boton.disabled = false; }, 2500);
+  }
+}
+
+// roundRect(ctx, x, y, w, h, r) -> dibuja un rectángulo con esquinas redondeadas.
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// descargarBlob(blob) -> descarga un blob como archivo.
+function descargarBlob(blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "nomina.png";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+$("btn-imagen").addEventListener("click", () => generarImagenNomina());
+
 $("btn-login").addEventListener("click", () => {
   $("login-error").classList.add("oculto");
   $("login-pin").value = "";
