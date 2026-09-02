@@ -1296,9 +1296,9 @@ def agregar_cancha(nombre):
     if DB.execute("SELECT 1 FROM canchas WHERE nombre = ? COLLATE NOCASE",
                   (nombre,)).fetchone():
         raise ErrorApp("Esa cancha ya existe")
-    DB.execute("INSERT INTO canchas (nombre) VALUES (?)", (nombre,))
+    cur = DB.execute("INSERT INTO canchas (nombre) VALUES (?)", (nombre,))
     DB.commit()
-    return {"ok": True, "cancha": nombre}
+    return {"ok": True, "cancha": nombre, "id": cur.lastrowid}
 
 
 def editar_cancha(ident, nombre):

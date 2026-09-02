@@ -1031,12 +1031,21 @@ $("btn-guardar-cancha").addEventListener("click", async () => {
     if (editandoCanchaId) {
       await api(`/api/canchas/${editandoCanchaId}/editar`, { method: "POST", body: { nombre } });
     } else {
-      await api("/api/canchas", { method: "POST", body: { nombre } });
-      $("n-cancha").value = nombre;
+      const r = await api("/api/canchas", { method: "POST", body: { nombre } });
+      if (r.id) {
+        estado.canchas.push({ id: r.id, nombre: r.cancha });
+      }
+      pintarCanchas();
+      if (editandoPartidoId) {
+        $("p-cancha").value = nombre;
+        $("p-cancha").dispatchEvent(new Event("input"));
+      } else {
+        $("n-cancha").value = nombre;
+        $("n-cancha").dispatchEvent(new Event("input"));
+      }
     }
     $("card-cancha-nueva").classList.add("oculto");
     resetFormCancha();
-    await cargar();
   } catch (err) {
     alert(err.message);
   }
