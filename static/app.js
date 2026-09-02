@@ -310,6 +310,18 @@ function pintarCanchasNomina() {
     </div>`).join("") : '<p class="vacio">Aún no hay canchas guardadas.</p>';
 }
 
+function pintarCanchasPestana() {
+  const canchas = estado.canchas || [];
+  const cont = $("lista-canchas-pestana");
+  if (!cont) return;
+  cont.innerHTML = canchas.length ? canchas.map((c) => `
+    <div class="fila">
+      <span class="nombre">🏟 ${esc(c.nombre)}</span>
+      <button class="icono" data-editar-cancha="${c.id}" title="Editar cancha">✏️</button>
+      <button class="icono" data-borrar-cancha="${c.id}" title="Borrar cancha">🗑</button>
+    </div>`).join("") : '<p class="vacio">Aún no hay canchas guardadas.</p>';
+}
+
 // autocompletarCancha(idInput, idCont) -> hace que escribir en el campo de cancha
 // muestre sugerencias de las canchas guardadas (de la base de datos).
 function autocompletarCancha(idInput, idCont) {
@@ -559,6 +571,7 @@ function activarTab(nombre) {
   document.querySelector(`.tabs button[data-tab="${nombre}"]`).classList.add("activa");
   document.querySelectorAll(".tab").forEach((s) => s.classList.add("oculto"));
   document.querySelector(`#tab-${nombre}`).classList.remove("oculto");
+  if (nombre === "canchas") pintarCanchasPestana();
   window.scrollTo({ top: 0 });
   localStorage.setItem("pestana", nombre);
 }
@@ -877,6 +890,7 @@ document.addEventListener("click", async (e) => {
       const cancha = (estado.canchas || []).find((x) => String(x.id) === d.editarCancha);
       if (!cancha) return;
       const enNomina = !!(e.target.closest("#card-cancha-nomina"));
+      const enPestana = !!(e.target.closest("#card-cancha-pestana"));
       editandoCanchaId = cancha.id;
       if (enNomina) {
         $("c-cancha-nomina").value = cancha.nombre;
@@ -884,6 +898,10 @@ document.addEventListener("click", async (e) => {
         $("card-cancha-nomina").classList.remove("oculto");
         $("card-cancha-nomina").style.display = "";
         $("c-cancha-nomina").focus();
+      } else if (enPestana) {
+        $("c-cancha-pestana").value = cancha.nombre;
+        $("btn-guardar-cancha-pestana").textContent = "💾 Guardar cambios";
+        $("c-cancha-pestana").focus();
       } else {
         $("c-cancha-nueva").value = cancha.nombre;
         $("btn-guardar-cancha").textContent = "💾 Guardar cambios";
@@ -895,6 +913,7 @@ document.addEventListener("click", async (e) => {
       await api(`/api/canchas/${d.borrarCancha}`, { method: "DELETE" });
       pintarCanchas();
       pintarCanchasNomina();
+      pintarCanchasPestana();
     } else if (d.sacarGrupo) {
       if (!confirm("¿Sacar del grupo por no pagar al plazo y pasar sus multas a Eliminados?")) return;
       await api(`/api/jugadores/${d.sacarGrupo}`, { method: "POST", body: { expulsado: 1 } });
@@ -1034,6 +1053,36 @@ $("btn-guardar-cancha-nomina").addEventListener("click", async () => {
     $("card-cancha-nomina").style.display = "none";
     resetFormCanchaNomina();
     pintarCanchas();
+    pintarCanchasPestana();
+    aviso(`Cancha "${nombre}" guardada.`);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// Card de canchas en pestaña CANCHAS.
+function resetFormCanchaPestana() {
+  editandoCanchaId = null;
+  $("c-cancha-pestana").value = "";
+  $("btn-guardar-cancha-pestana").textContent = "Guardar cancha";
+}
+$("btn-cancelar-cancha-pestana").addEventListener("click", () => {
+  resetFormCanchaPestana();
+});
+$("btn-guardar-cancha-pestana").addEventListener("click", async () => {
+  const nombre = $("c-cancha-pestana").value.trim();
+  if (!nombre) { alert("Escribe el nombre de la cancha"); return; }
+  try {
+    if (editandoCanchaId) {
+      await api(`/api/canchas/${editandoCanchaId}/editar`, { method: "POST", body: { nombre } });
+    } else {
+      const r = await api("/api/canchas", { method: "POST", body: { nombre } });
+      if (r.id) estado.canchas.push({ id: r.id, nombre: r.cancha });
+    }
+    resetFormCanchaPestana();
+    pintarCanchas();
+    pintarCanchasNomina();
+    pintarCanchasPestana();
     aviso(`Cancha "${nombre}" guardada.`);
   } catch (err) {
     alert(err.message);

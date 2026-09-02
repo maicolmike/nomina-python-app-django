@@ -291,6 +291,22 @@
     <div id="lista-jugadores" class="tarjeta lista"></div>
   </section>
 
+  <!-- ============================================================ CANCHAS -->
+  <section id="tab-canchas" class="tab oculto">
+    <div id="card-cancha-pestana" class="tarjeta solo-directiva">
+      <h3 class="titulo-tarjeta">🏟 GESTIÓN DE CANCHAS</h3>
+      <div id="form-cancha-pestana" class="rejilla">
+        <label class="ancho">Nombre de la cancha <input id="c-cancha-pestana" placeholder="Ej: Coliseo las Américas"></label>
+        <div class="acciones ancho">
+          <button id="btn-guardar-cancha-pestana" class="btn morado">Guardar cancha</button>
+          <button id="btn-cancelar-cancha-pestana" class="btn rojo">Cancelar</button>
+        </div>
+      </div>
+      <h3 class="titulo-mini">Listado de canchas</h3>
+      <div id="lista-canchas-pestana"></div>
+    </div>
+  </section>
+
   <!-- ============================================================ CONFIG -->
   <section id="tab-config" class="tab solo-directiva oculto">
     <div class="tarjeta">
@@ -337,6 +353,7 @@
   <button data-tab="nomina"><span>📋</span>Nómina</button>
   <button data-tab="multas"><span>💸</span>Multas</button>
   <button data-tab="jugadores"><span>👥</span>Jugadores</button>
+  <button data-tab="canchas"><span>🏟</span>Canchas</button>
   <button data-tab="reglamento"><span>📖</span>Reglamento</button>
   <button data-tab="config" class="solo-directiva"><span>⚙️</span>Config</button>
 </nav>
