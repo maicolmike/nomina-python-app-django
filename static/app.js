@@ -300,6 +300,16 @@ function pintarCanchas() {
     </div>`).join("") : '<p class="vacio">Aún no hay canchas guardadas.</p>';
 }
 
+function pintarCanchasNomina() {
+  const canchas = estado.canchas || [];
+  $("lista-canchas-nomina").innerHTML = canchas.length ? canchas.map((c) => `
+    <div class="fila">
+      <span class="nombre">🏟 ${esc(c.nombre)}</span>
+      <button class="icono" data-editar-cancha="${c.id}" title="Editar cancha">✏️</button>
+      <button class="icono" data-borrar-cancha="${c.id}" title="Borrar cancha">🗑</button>
+    </div>`).join("") : '<p class="vacio">Aún no hay canchas guardadas.</p>';
+}
+
 // autocompletarCancha(idInput, idCont) -> hace que escribir en el campo de cancha
 // muestre sugerencias de las canchas guardadas (de la base de datos).
 function autocompletarCancha(idInput, idCont) {
@@ -866,14 +876,25 @@ document.addEventListener("click", async (e) => {
     } else if (d.editarCancha) {
       const cancha = (estado.canchas || []).find((x) => String(x.id) === d.editarCancha);
       if (!cancha) return;
+      const enNomina = !!(e.target.closest("#card-cancha-nomina"));
       editandoCanchaId = cancha.id;
-      $("c-cancha-nueva").value = cancha.nombre;
-      $("btn-guardar-cancha").textContent = "💾 Guardar cambios";
-      $("card-cancha-nueva").classList.remove("oculto");
-      $("c-cancha-nueva").focus();
+      if (enNomina) {
+        $("c-cancha-nomina").value = cancha.nombre;
+        $("btn-guardar-cancha-nomina").textContent = "💾 Guardar cambios";
+        $("card-cancha-nomina").classList.remove("oculto");
+        $("card-cancha-nomina").style.display = "";
+        $("c-cancha-nomina").focus();
+      } else {
+        $("c-cancha-nueva").value = cancha.nombre;
+        $("btn-guardar-cancha").textContent = "💾 Guardar cambios";
+        $("card-cancha-nueva").classList.remove("oculto");
+        $("c-cancha-nueva").focus();
+      }
     } else if (d.borrarCancha) {
       if (!confirm("¿Borrar esta cancha?")) return;
       await api(`/api/canchas/${d.borrarCancha}`, { method: "DELETE" });
+      pintarCanchas();
+      pintarCanchasNomina();
     } else if (d.sacarGrupo) {
       if (!confirm("¿Sacar del grupo por no pagar al plazo y pasar sus multas a Eliminados?")) return;
       await api(`/api/jugadores/${d.sacarGrupo}`, { method: "POST", body: { expulsado: 1 } });
@@ -977,6 +998,47 @@ function abrirFormCancha() {
   $("c-cancha-nueva").focus();
 }
 $("btn-nuevo-cancha").addEventListener("click", abrirFormCancha);
+
+// Card de canchas en pestaña NÓMINA (editar partido).
+function resetFormCanchaNomina() {
+  editandoCanchaId = null;
+  $("c-cancha-nomina").value = "";
+  $("btn-guardar-cancha-nomina").textContent = "Guardar cancha";
+}
+function abrirFormCanchaNomina() {
+  resetFormCanchaNomina();
+  $("card-cancha-nomina").classList.remove("oculto");
+  $("card-cancha-nomina").style.display = "";
+  $("c-cancha-nomina").focus();
+  pintarCanchasNomina();
+}
+$("btn-editar-partido-cancha").addEventListener("click", abrirFormCanchaNomina);
+$("btn-cancelar-cancha-nomina").addEventListener("click", () => {
+  resetFormCanchaNomina();
+  $("card-cancha-nomina").classList.add("oculto");
+  $("card-cancha-nomina").style.display = "none";
+});
+$("btn-guardar-cancha-nomina").addEventListener("click", async () => {
+  const nombre = $("c-cancha-nomina").value.trim();
+  if (!nombre) { alert("Escribe el nombre de la cancha"); return; }
+  try {
+    if (editandoCanchaId) {
+      await api(`/api/canchas/${editandoCanchaId}/editar`, { method: "POST", body: { nombre } });
+    } else {
+      const r = await api("/api/canchas", { method: "POST", body: { nombre } });
+      if (r.id) estado.canchas.push({ id: r.id, nombre: r.cancha });
+      $("p-cancha").value = nombre;
+      $("p-cancha").dispatchEvent(new Event("input"));
+    }
+    $("card-cancha-nomina").classList.add("oculto");
+    $("card-cancha-nomina").style.display = "none";
+    resetFormCanchaNomina();
+    pintarCanchas();
+    aviso(`Cancha "${nombre}" guardada.`);
+  } catch (err) {
+    alert(err.message);
+  }
+});
 $("btn-ver-historial").addEventListener("click", () => {
   const card = $("card-historial");
   card.classList.toggle("oculto");
@@ -1036,6 +1098,7 @@ $("btn-guardar-cancha").addEventListener("click", async () => {
         estado.canchas.push({ id: r.id, nombre: r.cancha });
       }
       pintarCanchas();
+      pintarCanchasNomina();
       if (editandoPartidoId) {
         $("p-cancha").value = nombre;
         $("p-cancha").dispatchEvent(new Event("input"));
