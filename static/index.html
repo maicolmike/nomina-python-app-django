@@ -74,17 +74,18 @@
         <b id="c-hombres">0/6</b>
         <div class="barra-progreso"><i id="b-hombres"></i></div>
       </div>
-      <div class="tarjeta solo-directiva cupos-btn">
-        <div class="acciones">
-          <button id="btn-cambiar-cupos" class="btn morado oculto">✏️ Modificar cupos</button>
-        </div>
-        <div id="form-cupos" class="rejilla oculto" style="margin-top:10px;">
-          <label>Mujeres <input id="cupos-mujeres" type="number" min="0" value="6"></label>
-          <label>Hombres <input id="cupos-hombres" type="number" min="0" value="6"></label>
-          <div class="acciones ancho">
-            <button id="btn-guardar-cupos" class="btn morado">Guardar cupos</button>
-            <button id="btn-cancelar-cupos" class="btn claro">Cancelar</button>
-          </div>
+      <div class="tarjeta solo-directiva" style="padding:10px;display:flex;align-items:center;">
+        <button id="btn-cambiar-cupos" class="btn morado">✏️ Modificar cupos</button>
+      </div>
+    </div>
+
+    <div id="card-cupos" class="tarjeta solo-directiva oculto">
+      <div class="rejilla" style="margin-top:2px;">
+        <label>Mujeres <input id="cupos-mujeres" type="number" min="0" value="6"></label>
+        <label>Hombres <input id="cupos-hombres" type="number" min="0" value="6"></label>
+        <div class="acciones ancho">
+          <button id="btn-guardar-cupos" class="btn morado">Guardar cupos</button>
+          <button id="btn-cancelar-cupos" class="btn claro">Cancelar</button>
         </div>
       </div>
     </div>

@@ -1296,9 +1296,9 @@ $("btn-agregar-jugador").addEventListener("click", async () => {
 $("btn-cambiar-cupos").addEventListener("click", () => {
   $("cupos-mujeres").value = estado.config.cupos_mujeres || 6;
   $("cupos-hombres").value = estado.config.cupos_hombres || 6;
-  $("form-cupos").classList.remove("oculto");
+  $("card-cupos").classList.remove("oculto");
 });
-$("btn-cancelar-cupos").addEventListener("click", () => $("form-cupos").classList.add("oculto"));
+$("btn-cancelar-cupos").addEventListener("click", () => $("card-cupos").classList.add("oculto"));
 $("btn-guardar-cupos").addEventListener("click", async () => {
   const mujeres = Number($("cupos-mujeres").value);
   const hombres = Number($("cupos-hombres").value);
@@ -1315,7 +1315,7 @@ $("btn-guardar-cupos").addEventListener("click", async () => {
         cupos_personalizados: "1",
       },
     });
-    $("form-cupos").classList.add("oculto");
+    $("card-cupos").classList.add("oculto");
     await cargar();
     alert("Cupos actualizados");
   } catch (err) {
