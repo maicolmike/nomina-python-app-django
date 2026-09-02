@@ -197,7 +197,7 @@ function pintarNomina() {
     + (estado.corte_invitados.permite
       ? " Recuerda: el invitado requiere nombre de quien lo anota y queda a decisión de la directiva."
       : ` Corte: ${estado.corte_invitados.fecha} a las ${estado.corte_invitados.hora}.`);
-  $("btn-cambiar-cupos").classList.toggle("oculto", !dir);
+
 }
 
 // filaJugador(i, n, dir, destino) -> el HTML de una fila de la nómina/espera.
@@ -1296,9 +1296,15 @@ $("btn-agregar-jugador").addEventListener("click", async () => {
 $("btn-cambiar-cupos").addEventListener("click", () => {
   $("cupos-mujeres").value = estado.config.cupos_mujeres || 6;
   $("cupos-hombres").value = estado.config.cupos_hombres || 6;
-  $("card-cupos").classList.remove("oculto");
+  const cc = $("card-cupos");
+  cc.classList.remove("oculto");
+  cc.style.display = "";
 });
-$("btn-cancelar-cupos").addEventListener("click", () => $("card-cupos").classList.add("oculto"));
+$("btn-cancelar-cupos").addEventListener("click", () => {
+  const cc = $("card-cupos");
+  cc.classList.add("oculto");
+  cc.style.display = "none";
+});
 $("btn-guardar-cupos").addEventListener("click", async () => {
   const mujeres = Number($("cupos-mujeres").value);
   const hombres = Number($("cupos-hombres").value);
@@ -1316,6 +1322,7 @@ $("btn-guardar-cupos").addEventListener("click", async () => {
       },
     });
     $("card-cupos").classList.add("oculto");
+    $("card-cupos").style.display = "none";
     await cargar();
     alert("Cupos actualizados");
   } catch (err) {
