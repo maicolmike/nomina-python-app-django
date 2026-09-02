@@ -255,6 +255,7 @@ let historialBusqueda = "";
 let historialTemporizador = null;
 function pintarHistorial() {
   const base = estado.historial || [];
+  $("c-historial").textContent = `(${base.length})`;
   // Filtro "tipo datatable": busca en fecha, hora, cancha y cantidad anotada.
   const h = historialBusqueda
     ? base.filter((p) => normalizar(
