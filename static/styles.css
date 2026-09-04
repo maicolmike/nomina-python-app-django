@@ -39,7 +39,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: linear-gradient(90deg, var(--rojo), #ef4444);
+  background: linear-gradient(90deg, var(--morado), var(--morado-claro));
   color: #fff;
   padding: 10px 16px;
   display: flex;
