@@ -210,7 +210,7 @@ textarea { font-size: .85rem; }
 }
 
 /* ----------------------------------------------------------- contadores */
-.contadores { display: grid; grid-template-columns: auto auto auto; gap: 6px; justify-content: start; }
+.contadores { display: grid; grid-template-columns: auto auto auto auto; gap: 6px; justify-content: start; }
 .contador { text-align: center; padding: 10px; width: 96px; }
 .contador .etiqueta { font-size: .62rem; color: var(--suave); letter-spacing: .5px; }
 .contador b { display: block; font-size: 1.15rem; margin: 2px 0 4px; }

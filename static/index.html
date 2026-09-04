@@ -91,6 +91,9 @@
       <div class="tarjeta solo-directiva" style="padding:10px;display:flex;align-items:center;">
         <button id="btn-cambiar-cupos" class="btn morado">✏️ Modificar cupos</button>
       </div>
+      <div class="tarjeta solo-directiva" style="padding:10px;display:flex;align-items:center;">
+        <button id="btn-registrar-jugador-nomina" class="btn warning">➕ Registrar jugador</button>
+      </div>
     </div>
 
     <div id="card-cupos" class="tarjeta solo-directiva oculto" style="display: none;">
@@ -101,6 +104,20 @@
           <button id="btn-guardar-cupos" class="btn morado">Guardar cupos</button>
           <button id="btn-cancelar-cupos" class="btn claro">Cancelar</button>
         </div>
+      </div>
+    </div>
+
+    <div id="card-registrar-jugador-nomina" class="tarjeta solo-directiva oculto" style="display: none;">
+      <h3 class="titulo-tarjeta">➕ AGREGAR JUGADOR AL GRUPO</h3>
+      <div class="rejilla">
+        <label class="ancho">Nombre y apellido <input id="j-nombre-nomina"></label>
+        <label>Género
+          <select id="j-genero-nomina"><option value="F">🌹 Mujer</option><option value="M">⚽ Hombre</option></select>
+        </label>
+      </div>
+      <div class="acciones ancho">
+        <button id="btn-agregar-jugador-nomina" class="btn morado">Guardar</button>
+        <button id="btn-cancelar-jugador-nomina" class="btn rojo">Cancelar</button>
       </div>
     </div>
 

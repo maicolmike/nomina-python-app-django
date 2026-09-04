@@ -1452,6 +1452,37 @@ $("btn-guardar-cupos").addEventListener("click", async () => {
   }
 });
 
+// Registrar jugador desde la pestaña NÓMINA.
+$("btn-registrar-jugador-nomina").addEventListener("click", () => {
+  const card = $("card-registrar-jugador-nomina");
+  card.classList.remove("oculto");
+  card.style.display = "";
+  $("j-nombre-nomina").focus();
+});
+$("btn-cancelar-jugador-nomina").addEventListener("click", () => {
+  const card = $("card-registrar-jugador-nomina");
+  card.classList.add("oculto");
+  card.style.display = "none";
+});
+$("btn-agregar-jugador-nomina").addEventListener("click", async () => {
+  const nombre = $("j-nombre-nomina").value.trim();
+  if (!nombre) { alert("Escribe el nombre del jugador"); return; }
+  try {
+    await api("/api/jugadores", {
+      method: "POST",
+      body: { nombre, genero: $("j-genero-nomina").value, miembro: 1 },
+    });
+    const card = $("card-registrar-jugador-nomina");
+    card.classList.add("oculto");
+    card.style.display = "none";
+    $("j-nombre-nomina").value = "";
+    await cargar();
+    aviso(`Jugador "${nombre}" registrado.`);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
 document.querySelectorAll('[id^="cf-"]').forEach((el) => {
   el.addEventListener("focus", () => (editandoConfig = true));
 });
